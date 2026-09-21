@@ -37,7 +37,7 @@ export function Timeline({ rows, startedAt, current, follow = false }: Props) {
 function PlainTimeline({ rows, startedAt, current, follow }: Required<Pick<Props, "follow">> & Props) {
   const scrollTo = useCallback((index: number) => {
     const el = document.querySelector(`[data-step-index="${index}"]`);
-    if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ block: "end", behavior: "smooth" });
+    if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ block: "end", behavior: "auto" });
   }, []);
   useFollow(current, follow, scrollTo);
 
