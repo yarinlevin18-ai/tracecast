@@ -16,7 +16,7 @@ const PREVIEW = 220;
 
 /** Turns a share url into the matching embed url and an iframe snippet. */
 export function embedSnippet(shareUrl: string): string {
-  const src = shareUrl.replace(/\/r\/([0-9A-Za-z]+)$/, "/embed/$1");
+  const src = shareUrl.replace(/\/r\/([0-9A-Za-z]{12})$/, "/embed/$1");
   return `<iframe src="${src}" width="100%" height="560" style="border:0;border-radius:12px;background:#09090b" loading="lazy" allowfullscreen title="Tracecast replay"></iframe>`;
 }
 
