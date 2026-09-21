@@ -303,6 +303,15 @@ describe("parseClaudeCodeSession", () => {
     expect(trace.steps.filter((s) => s.agent === "abc123")).toHaveLength(2);
   });
 
+  it("warns when subagent steps predate their Agent call", () => {
+    const early = subText.replace(T2, "2026-09-21T09:59:59.000Z");
+    const { warnings } = parseClaudeCodeSession([
+      { name: "abc.jsonl", text: mainText },
+      { name: "agent-abc123.jsonl", text: early },
+    ]);
+    expect(warnings).toContain("agent-abc123.jsonl: steps start before their Agent call a1:0, clock skew between files");
+  });
+
   it("picks the Agent tool_result among several batched in one line", () => {
     const main = jsonl([
       {

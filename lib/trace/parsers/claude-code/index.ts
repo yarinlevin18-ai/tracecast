@@ -66,9 +66,11 @@ export function parseClaudeCodeSession(files: SessionFile[]): ParseResult {
     const call = agentCalls.get(agentId);
     if (!call) warnings.push(`${sub.name}: no matching Agent call in main session (${agentId})`);
     const name = agentDisplayName(call, agentId);
-    for (const s of linesToSteps(sub.lines, name, warnings)) {
-      draft.push(call ? { ...s, parentId: call.id } : s);
+    const subSteps = linesToSteps(sub.lines, name, warnings);
+    if (call && subSteps.some((s) => Date.parse(s.at) < Date.parse(call.at))) {
+      warnings.push(`${sub.name}: steps start before their Agent call ${call.id}, clock skew between files`);
     }
+    for (const s of subSteps) draft.push(call ? { ...s, parentId: call.id } : s);
   }
 
   const ordered = draft
