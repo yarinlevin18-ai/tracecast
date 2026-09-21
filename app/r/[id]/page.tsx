@@ -11,6 +11,7 @@ type Params = { params: Promise<{ id: string }> };
 
 const load = cache(async (id: string) => {
   try {
+    // SupabaseClient's generic builder types do not line up with the narrow StoreClient slice.
     return await loadTrace(getAdminClient() as unknown as StoreClient, id);
   } catch (err) {
     if (err instanceof SharingNotConfigured) return null;

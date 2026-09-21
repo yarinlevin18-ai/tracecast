@@ -104,26 +104,30 @@ export function ShareDialog({ trace, onClose }: Props) {
                   : `${hits.length} step${hits.length === 1 ? "" : "s"} had secrets or personal paths. They are redacted below; edit or remove anything else you would rather not publish.`}
               </p>
               <ul className="mt-4 space-y-3">
-                {hits.map((h) => (
-                  <HitRow
-                    key={h.stepId}
-                    hit={h}
-                    step={stepById.get(h.stepId)!}
-                    removed={removed.has(h.stepId)}
-                    edit={edits[h.stepId]}
-                    editing={editing === h.stepId}
-                    onRemove={() => setRemoved((s) => new Set(s).add(h.stepId))}
-                    onRestore={() =>
-                      setRemoved((s) => {
-                        const n = new Set(s);
-                        n.delete(h.stepId);
-                        return n;
-                      })
-                    }
-                    onEdit={() => setEditing(editing === h.stepId ? null : h.stepId)}
-                    onChange={(field, value) => setEdits((e) => ({ ...e, [h.stepId]: { field, value } }))}
-                  />
-                ))}
+                {hits.map((h) => {
+                  const step = stepById.get(h.stepId);
+                  if (!step) return null;
+                  return (
+                    <HitRow
+                      key={h.stepId}
+                      hit={h}
+                      step={step}
+                      removed={removed.has(h.stepId)}
+                      edit={edits[h.stepId]}
+                      editing={editing === h.stepId}
+                      onRemove={() => setRemoved((s) => new Set(s).add(h.stepId))}
+                      onRestore={() =>
+                        setRemoved((s) => {
+                          const n = new Set(s);
+                          n.delete(h.stepId);
+                          return n;
+                        })
+                      }
+                      onEdit={() => setEditing(editing === h.stepId ? null : h.stepId)}
+                      onChange={(field, value) => setEdits((e) => ({ ...e, [h.stepId]: { field, value } }))}
+                    />
+                  );
+                })}
               </ul>
             </div>
             <div className="flex flex-wrap items-center gap-3 border-t border-zinc-800 px-5 py-4">
