@@ -23,10 +23,16 @@ describe("buildSchedule", () => {
     expect(s.totalMs).toBe(s.durationMs.reduce((a, b) => a + b, 0));
   });
 
-  it("keeps longer real gaps at least as long in playback", () => {
-    const s = buildSchedule(gaps([2_000, 8_000, 4_000, 0]));
-    expect(s.durationMs[1]).toBeGreaterThanOrEqual(s.durationMs[2]);
-    expect(s.durationMs[2]).toBeGreaterThanOrEqual(s.durationMs[0]);
+  it("keeps longer real gaps longer in playback when nothing saturates", () => {
+    // 60 gaps cycling 400, 800, 1200 ms sum to 48 s, so the scale is 1.25 and
+    // the three sizes land at 500, 1000 and 1500 ms without all hitting the cap.
+    const real = Array.from({ length: 61 }, (_, i) => [400, 800, 1200][i % 3]);
+    real[60] = 0;
+    const s = buildSchedule(gaps(real));
+    expect(s.durationMs[0]).toBeGreaterThanOrEqual(MIN_STEP_MS);
+    expect(s.durationMs[1]).toBeGreaterThan(s.durationMs[0]);
+    expect(s.durationMs[2]).toBeGreaterThan(s.durationMs[1]);
+    expect(s.durationMs[2]).toBeLessThanOrEqual(MAX_STEP_MS);
   });
 
   it("lands a typical 20 minute session near a minute", () => {

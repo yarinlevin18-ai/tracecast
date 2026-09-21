@@ -17,7 +17,7 @@ export function initialPlayer(): PlayerState {
 /** Move the clock forward by a frame. No-op while paused. */
 export function advance(p: PlayerState, s: Schedule, dtMs: number): PlayerState {
   if (!p.playing) return p;
-  const t = p.timeMs + dtMs * p.speed;
+  const t = Math.max(0, p.timeMs + dtMs * p.speed);
   if (t >= s.totalMs) return { ...p, timeMs: s.totalMs, playing: false, ended: true };
   return { ...p, timeMs: t };
 }

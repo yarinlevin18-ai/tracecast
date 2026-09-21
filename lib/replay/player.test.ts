@@ -16,6 +16,7 @@ describe("player", () => {
     const p = togglePlay(initialPlayer(), s);
     expect(advance(p, s, 500).timeMs).toBe(500);
     expect(advance(setSpeed(p, 4), s, 500).timeMs).toBe(2000);
+    expect(advance(p, s, -500).timeMs).toBe(0);
   });
 
   it("stops at the end and marks ended", () => {
