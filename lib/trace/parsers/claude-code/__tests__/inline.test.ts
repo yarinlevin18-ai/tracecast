@@ -163,6 +163,7 @@ describe("linesToSteps", () => {
       { type: "system", uuid: "s2", timestamp: T1, subtype: "compact_boundary" },
       { type: "system", uuid: "s3", subtype: "compact_boundary" },
       { type: "user", uuid: "u9", message: { content: "no timestamp" } },
+      { type: "user", uuid: "u10", timestamp: "not a date", message: { content: "bad time" } },
     ];
     const warnings: string[] = [];
     const steps = linesToSteps(lines, "main", warnings);
@@ -171,6 +172,7 @@ describe("linesToSteps", () => {
     expect(warnings).toEqual([
       "system line s3 has no timestamp, skipped",
       "user line u9 has no timestamp, skipped",
+      "user line u10 has no timestamp, skipped",
     ]);
   });
 
@@ -299,5 +301,91 @@ describe("parseClaudeCodeSession", () => {
     ]);
     expect(warnings).toContain("agent-zzz.jsonl: no matching Agent call in main session (abc123)");
     expect(trace.steps.filter((s) => s.agent === "abc123")).toHaveLength(2);
+  });
+
+  it("picks the Agent tool_result among several batched in one line", () => {
+    const main = jsonl([
+      {
+        type: "assistant",
+        uuid: "a1",
+        timestamp: T0,
+        message: {
+          id: "m1",
+          content: [
+            { type: "tool_use", id: "toolu_read", name: "Read", input: { path: "x" } },
+            { type: "tool_use", id: "toolu_agent2", name: "Agent", input: { description: "Sub work" } },
+          ],
+        },
+      },
+      {
+        type: "user",
+        uuid: "u1",
+        timestamp: T1,
+        toolUseResult: { agentId: "xyz" },
+        message: {
+          content: [
+            { type: "tool_result", tool_use_id: "toolu_read", content: "file contents" },
+            { type: "tool_result", tool_use_id: "toolu_agent2", content: "done" },
+          ],
+        },
+      },
+    ]);
+    const sub = jsonl([
+      { type: "user", uuid: "s1", timestamp: T2, isSidechain: true, agentId: "xyz", message: { content: "go" } },
+    ]);
+
+    const { trace } = parseClaudeCodeSession([
+      { name: "main.jsonl", text: main },
+      { name: "agent-xyz.jsonl", text: sub },
+    ]);
+
+    const subStep = trace.steps.find((s) => s.agent === "Sub work");
+    expect(subStep).toBeDefined();
+    expect(subStep?.parentId).toBe("a1:1");
+  });
+
+  it("treats a file with an isSidechain first line as a subagent regardless of name", () => {
+    const { trace } = parseClaudeCodeSession([
+      { name: "main.jsonl", text: jsonl([{ type: "user", uuid: "u1", timestamp: T0, message: { content: "hi" } }]) },
+      { name: "other.jsonl", text: subText },
+    ]);
+    expect(trace.steps.some((s) => s.agent === "main" && s.text === "Review captions")).toBe(false);
+    expect(trace.steps.filter((s) => s.agent === "abc123")).toHaveLength(2);
+  });
+
+  it("never picks a subagent prompt as the trace title", () => {
+    const main = jsonl([
+      {
+        type: "assistant",
+        uuid: "a1",
+        timestamp: T0,
+        message: { id: "m1", content: [{ type: "tool_use", id: "toolu_agent", name: "Agent", input: { description: "Do sub work" } }] },
+      },
+      {
+        type: "user",
+        uuid: "u2",
+        timestamp: T1,
+        toolUseResult: { agentId: "foo" },
+        message: { content: [{ type: "tool_result", tool_use_id: "toolu_agent", content: "done" }] },
+      },
+    ]);
+    const sub = jsonl([
+      { type: "user", uuid: "s1", timestamp: T2, isSidechain: true, agentId: "foo", message: { content: "Sub prompt text" } },
+    ]);
+
+    const { trace } = parseClaudeCodeSession([
+      { name: "main.jsonl", text: main },
+      { name: "agent-foo.jsonl", text: sub },
+    ]);
+
+    expect(trace.title).toBe("Untitled session");
+  });
+
+  it("warns when multiple main session files are given", () => {
+    const { warnings } = parseClaudeCodeSession([
+      { name: "one.jsonl", text: jsonl([{ type: "user", uuid: "u1", timestamp: T0, message: { content: "hi" } }]) },
+      { name: "two.jsonl", text: jsonl([{ type: "user", uuid: "u2", timestamp: T1, message: { content: "hey" } }]) },
+    ]);
+    expect(warnings.some((w) => w.startsWith("multiple main session files given, using "))).toBe(true);
   });
 });

@@ -26,7 +26,7 @@ export function linesToSteps(lines: RawLine[], agent: string, warnings: string[]
     const { type, uuid, timestamp: at } = line;
     if (type !== "user" && type !== "assistant" && type !== "system") continue;
     if (!uuid) continue;
-    if (!at) {
+    if (!at || Number.isNaN(Date.parse(at))) {
       warnings.push(`${type} line ${uuid} has no timestamp, skipped`);
       continue;
     }

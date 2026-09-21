@@ -15,7 +15,7 @@ function isSubagentFile(file: ParsedFile): boolean {
 }
 
 function makeTitle(steps: DraftStep[]): string {
-  const first = steps.find((s) => s.kind === "user" && s.text && s.text !== "[image]");
+  const first = steps.find((s) => s.agent === "main" && s.kind === "user" && s.text && s.text !== "[image]");
   if (!first?.text) return UNTITLED;
   const flat = first.text.replace(/\s+/g, " ").trim();
   return flat.length > TITLE_MAX ? flat.slice(0, TITLE_MAX - 3) + "..." : flat;
@@ -30,7 +30,9 @@ function findAgentCalls(mainLines: RawLine[], mainSteps: DraftStep[]): Map<strin
   for (const line of mainLines) {
     const result = line.toolUseResult as { agentId?: unknown } | undefined;
     if (typeof result?.agentId !== "string") continue;
-    const block = toBlocks(line.message?.content).find((b) => b.type === "tool_result");
+    const block = toBlocks(line.message?.content).find(
+      (b) => b.type === "tool_result" && callsById.get(b.tool_use_id ?? "")?.tool?.name === "Agent"
+    );
     const call = block?.tool_use_id ? callsById.get(block.tool_use_id) : undefined;
     if (call) out.set(result.agentId, call);
   }
@@ -50,8 +52,9 @@ export function parseClaudeCodeSession(files: SessionFile[]): ParseResult {
     return { name: f.name, lines };
   });
 
-  const subs = parsed.filter(isSubagentFile);
-  const mains = parsed.filter((p) => !isSubagentFile(p));
+  const subs: ParsedFile[] = [];
+  const mains: ParsedFile[] = [];
+  for (const p of parsed) (isSubagentFile(p) ? subs : mains).push(p);
   if (mains.length > 1) warnings.push(`multiple main session files given, using ${mains[0].name}`);
   const main: ParsedFile = mains[0] ?? { name: "main", lines: [] };
 
