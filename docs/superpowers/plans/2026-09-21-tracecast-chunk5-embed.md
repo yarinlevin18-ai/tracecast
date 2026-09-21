@@ -80,7 +80,7 @@ describe("describeTrace", () => {
 describe("kindStrip", () => {
   it("buckets steps into n cells using the most common kind per cell", () => {
     const steps = [step(0, "user"), step(1, "tool_call"), step(2, "tool_call"), step(3, "assistant")];
-    expect(kindStrip(steps, 2)).toEqual(["tool_call", "tool_call"]);
+    expect(kindStrip(steps, 2)).toEqual(["user", "tool_call"]);
     expect(kindStrip(steps, 4)).toEqual(["user", "tool_call", "tool_call", "assistant"]);
   });
 
