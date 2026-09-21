@@ -2,7 +2,9 @@
 
 import { useCallback, useState } from "react";
 import { DropZone } from "@/components/trace/DropZone";
+import { TopBar, type ViewMode } from "@/components/trace/TopBar";
 import { TraceView } from "@/components/trace/TraceView";
+import { ReplayView } from "@/components/replay/ReplayView";
 import { useFixtureParam } from "@/components/trace/useFixtureParam";
 import { parseClaudeCodeSession } from "@/lib/trace/parsers/claude-code";
 import type { ParseResult, SessionFile } from "@/lib/trace/types";
@@ -10,6 +12,7 @@ import type { ParseResult, SessionFile } from "@/lib/trace/types";
 export default function Home() {
   const [result, setResult] = useState<ParseResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<ViewMode>("replay");
 
   const parseFiles = useCallback((files: SessionFile[]) => {
     const parsed = parseClaudeCodeSession(files);
@@ -25,13 +28,17 @@ export default function Home() {
 
   if (result) {
     return (
-      <TraceView
-        result={result}
-        onReset={() => {
-          setResult(null);
-          window.history.replaceState(null, "", "/");
-        }}
-      />
+      <>
+        <TopBar
+          mode={mode}
+          onMode={setMode}
+          onReset={() => {
+            setResult(null);
+            window.history.replaceState(null, "", "/");
+          }}
+        />
+        {mode === "replay" ? <ReplayView trace={result.trace} warnings={result.warnings} /> : <TraceView result={result} />}
+      </>
     );
   }
 
