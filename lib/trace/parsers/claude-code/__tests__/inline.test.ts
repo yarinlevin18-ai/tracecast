@@ -3,6 +3,7 @@ import { readLines } from "../raw";
 import { flattenResult, toBlocks } from "../blocks";
 import { linesToSteps } from "../steps";
 import type { RawLine } from "../raw";
+import { parseClaudeCode, parseClaudeCodeSession } from "../index";
 
 describe("readLines", () => {
   it("parses one object per line and skips bad lines with a warning", () => {
@@ -194,5 +195,109 @@ describe("linesToSteps", () => {
     expect(steps).toHaveLength(1);
     expect(steps[0].tokens).toEqual({ input: 6, output: 7 });
     expect(warnings).toEqual(["1 message(s) had usage but no content; tokens added to step a1:0"]);
+  });
+});
+
+function jsonl(objs: object[]): string {
+  return objs.map((o) => JSON.stringify(o)).join("\n") + "\n";
+}
+
+describe("parseClaudeCodeSession", () => {
+  const mainText = jsonl([
+    { type: "user", uuid: "u1", timestamp: T0, sessionId: "sess-1", message: { content: "Review the   caption   treatment please" } },
+    {
+      type: "assistant",
+      uuid: "a1",
+      timestamp: T1,
+      message: {
+        id: "m1",
+        model: "claude-x",
+        content: [{ type: "tool_use", id: "toolu_agent", name: "Agent", input: { description: "Review captions", prompt: "..." } }],
+        usage: { input_tokens: 10, output_tokens: 5 },
+      },
+    },
+    {
+      type: "user",
+      uuid: "u2",
+      timestamp: "2026-09-21T10:00:05.000Z",
+      toolUseResult: { agentId: "abc123", status: "done" },
+      message: { content: [{ type: "tool_result", tool_use_id: "toolu_agent", content: "done" }] },
+    },
+    {
+      type: "user",
+      uuid: "u3",
+      timestamp: "2026-09-21T10:00:06.000Z",
+      message: { content: [{ type: "tool_result", tool_use_id: "toolu_missing", content: "orphan" }] },
+    },
+  ]);
+
+  const subText = jsonl([
+    { type: "user", uuid: "s1", timestamp: T2, isSidechain: true, agentId: "abc123", message: { content: "Review captions" } },
+    {
+      type: "assistant",
+      uuid: "s2",
+      timestamp: "2026-09-21T10:00:03.000Z",
+      isSidechain: true,
+      agentId: "abc123",
+      message: { id: "m2", content: [{ type: "text", text: "Looks good" }], usage: { input_tokens: 7, output_tokens: 3 } },
+    },
+  ]);
+
+  it("merges subagent steps by time with parentId and agent name", () => {
+    const { trace, warnings } = parseClaudeCodeSession([
+      { name: "abc.jsonl", text: mainText },
+      { name: "agent-abc123.jsonl", text: subText },
+    ]);
+
+    expect(trace.id).toBe("sess-1");
+    expect(trace.source).toBe("claude-code");
+    expect(trace.model).toBe("claude-x");
+    expect(trace.title).toBe("Review the caption treatment please");
+    expect(trace.steps.map((s) => [s.index, s.kind, s.agent])).toEqual([
+      [0, "user", "main"],
+      [1, "tool_call", "main"],
+      [2, "user", "Review captions"],
+      [3, "assistant", "Review captions"],
+      [4, "tool_result", "main"],
+      [5, "tool_result", "main"],
+    ]);
+    expect(trace.steps[2].parentId).toBe("a1:0");
+    expect(trace.steps[3].parentId).toBe("a1:0");
+    expect(trace.steps[1].parentId).toBeUndefined();
+    expect(trace.steps.map((s) => s.durationMs)).toEqual([1000, 1000, 1000, 2000, 1000, 0]);
+    expect(trace.startedAt).toBe(T0);
+    expect(trace.endedAt).toBe("2026-09-21T10:00:06.000Z");
+    expect(trace.totals).toEqual({ inputTokens: 17, outputTokens: 8, toolCalls: 1, durationMs: 6000 });
+    expect(warnings).toEqual(["tool_result u3:0 has no matching tool_call (toolu_missing)"]);
+  });
+
+  it("parseClaudeCode handles a single file", () => {
+    const { trace } = parseClaudeCode(mainText);
+    expect(trace.steps).toHaveLength(4);
+    expect(trace.steps.every((s) => s.agent === "main")).toBe(true);
+  });
+
+  it("returns an empty trace with a warning when nothing parses", () => {
+    const { trace, warnings } = parseClaudeCode("not json\n");
+    expect(trace.steps).toEqual([]);
+    expect(trace.title).toBe("Untitled session");
+    expect(warnings).toContain("no steps found");
+  });
+
+  it("truncates long titles to 80 chars", () => {
+    const { trace } = parseClaudeCode(
+      jsonl([{ type: "user", uuid: "u1", timestamp: T0, message: { content: "x".repeat(200) } }])
+    );
+    expect(trace.title).toHaveLength(80);
+    expect(trace.title.endsWith("...")).toBe(true);
+  });
+
+  it("warns when a subagent file has no matching Agent call", () => {
+    const { trace, warnings } = parseClaudeCodeSession([
+      { name: "main.jsonl", text: jsonl([{ type: "user", uuid: "u1", timestamp: T0, message: { content: "hi" } }]) },
+      { name: "agent-zzz.jsonl", text: subText },
+    ]);
+    expect(warnings).toContain("agent-zzz.jsonl: no matching Agent call in main session (abc123)");
+    expect(trace.steps.filter((s) => s.agent === "abc123")).toHaveLength(2);
   });
 });
