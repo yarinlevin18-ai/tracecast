@@ -117,7 +117,7 @@ function Collapsible({ label, summary, muted = false, children }: { label: strin
         <ChevronRight className={`h-3 w-3 transition-transform ${open ? "rotate-90" : ""}`} aria-hidden />
         {label} <span className="text-zinc-600">{summary}</span>
       </button>
-      {open && <p className={`mt-2 whitespace-pre-wrap text-sm leading-6 ${muted ? "italic text-zinc-400" : "text-zinc-300"}`}>{children}</p>}
+      {open && <p className={`mt-2 whitespace-pre-wrap [overflow-wrap:anywhere] text-sm leading-6 ${muted ? "italic text-zinc-400" : "text-zinc-300"}`}>{children}</p>}
     </div>
   );
 }
@@ -128,7 +128,7 @@ function LongText({ text, className }: { text: string; className: string }) {
   const shown = long && !open ? text.slice(0, LONG_TEXT) + "..." : text;
   return (
     <div>
-      <p className={`whitespace-pre-wrap text-sm leading-6 ${className}`}>{shown}</p>
+      <p className={`whitespace-pre-wrap [overflow-wrap:anywhere] text-sm leading-6 ${className}`}>{shown}</p>
       {long && (
         <button type="button" onClick={() => setOpen((v) => !v)} className="mt-1 text-xs text-zinc-500 hover:text-zinc-300">
           {open ? "Show less" : "Show more"}

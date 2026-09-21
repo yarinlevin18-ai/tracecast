@@ -22,12 +22,19 @@ export function Timeline({ rows, startedAt }: Props) {
 
 function VirtualTimeline({ rows, startedAt }: Props) {
   const listRef = useRef<HTMLDivElement>(null);
-  // Reading offsetTop during render would touch a ref value while rendering,
-  // so the list's offset is captured after mount instead. It is 0 on the
-  // first render, then corrects once the effect runs.
+  // The list offset from the top of the page is read after mount (reading a
+  // ref during render is not allowed) and refreshed whenever the page above
+  // it changes height, for example when the warnings box opens.
   const [scrollMargin, setScrollMargin] = useState(0);
   useEffect(() => {
-    if (listRef.current) setScrollMargin(listRef.current.offsetTop);
+    const el = listRef.current;
+    if (!el) return;
+    const update = () => setScrollMargin(el.offsetTop);
+    update();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(update);
+    observer.observe(document.body);
+    return () => observer.disconnect();
   }, []);
   const virtualizer = useWindowVirtualizer({
     count: rows.length,
