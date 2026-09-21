@@ -20,6 +20,8 @@ export const SECRET_PATTERNS: SecretPattern[] = [
   },
   { name: "bearer", pattern: /\bBearer\s+[A-Za-z0-9\-_.]{20,}/g, replacement: "Bearer REDACTED" },
   { name: "anthropic/openai", pattern: /\bsk-[A-Za-z0-9_-]{16,}/g, replacement: "sk-REDACTED" },
+  { name: "stripe", pattern: /\b[sr]k_(?:live|test)_[A-Za-z0-9]{16,}\b/g, replacement: "STRIPE-REDACTED" },
+  { name: "npm", pattern: /\bnpm_[A-Za-z0-9]{20,}\b/g, replacement: "npm_REDACTED" },
   { name: "google", pattern: /\bAIza[0-9A-Za-z_-]{35}\b/g, replacement: "AIza-REDACTED" },
   { name: "telegram", pattern: /\b\d{8,10}:[A-Za-z0-9_-]{35}\b/g, replacement: "TELEGRAM-REDACTED" },
   { name: "aws", pattern: /\bAKIA[0-9A-Z]{16}\b/g, replacement: "AKIA-REDACTED" },
@@ -41,7 +43,9 @@ export const SECRET_PATTERNS: SecretPattern[] = [
     name: "email",
     // The negative lookahead stops this from re-matching the "REDACTED@host"
     // text that conn-string just produced (\b keeps it from retrying mid-word).
-    pattern: /\b(?!REDACTED@)[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g,
+    // Domain must start with a letter so asset names like logo@2x.png survive,
+    // and git@ remotes are not personal addresses.
+    pattern: /\b(?!REDACTED@|git@)[\w.+-]+@[A-Za-z][\w-]*(?:\.[\w-]+)+/g,
     replacement: "user@example.com",
   },
   { name: "home-dir", pattern: /\/Users\/yarin\b/g, replacement: "/Users/dev" },

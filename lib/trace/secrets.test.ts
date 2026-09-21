@@ -70,4 +70,15 @@ describe("redactText", () => {
   it("masks a slack app token", () => {
     expect(redactText("xapp-1-A123-456-abcdef")).toBe("xapp-REDACTED");
   });
+
+  it("leaves asset filenames and git remotes alone", () => {
+    const text = "logo@2x.png and git@github.com:me/repo.git";
+    expect(redactText(text)).toBe(text);
+  });
+
+  it("masks Stripe and npm tokens", () => {
+    expect(redactText("sk_live_abcdefghijklmnop1234 rk_test_abcdefghijklmnop1234 npm_abcdefghijklmnopqrstuvwxyz")).toBe(
+      "STRIPE-REDACTED STRIPE-REDACTED npm_REDACTED",
+    );
+  });
 });
