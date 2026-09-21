@@ -16,9 +16,14 @@ export const KIND_COLORS: Record<StepKind, string> = {
 export function clampTitle(title: string, max: number): string {
   const t = title.trim();
   if (t.length <= max) return t;
-  const cut = t.slice(0, max - 3);
+  const cut = t.slice(0, Math.max(0, max - 3));
   const space = cut.lastIndexOf(" ");
   return (space > max / 2 ? cut.slice(0, space) : cut) + "...";
+}
+
+/** "1 tool call" / "N tool calls". */
+export function toolCallsLabel(n: number): string {
+  return `${n} tool call${n === 1 ? "" : "s"}`;
 }
 
 /** One line for og:description and the image subtitle. */
@@ -28,11 +33,18 @@ export function describeTrace(trace: Trace): string {
     `${n} step${n === 1 ? "" : "s"}`,
     `${formatTokens(trace.totals.inputTokens)} tokens in`,
     `${formatTokens(trace.totals.outputTokens)} out`,
-    `${trace.totals.toolCalls} tool call${trace.totals.toolCalls === 1 ? "" : "s"}`,
+    toolCallsLabel(trace.totals.toolCalls),
     formatDuration(trace.totals.durationMs),
   ];
   const line = parts.join(", ");
   return trace.model ? `${line} with ${trace.model}` : line;
+}
+
+/** Short footer line for the OG image: step count and recording date. */
+export function footerLine(trace: Trace): string {
+  const n = trace.steps.length;
+  const date = new Date(trace.startedAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  return `${n} step${n === 1 ? "" : "s"}, recorded ${date}`;
 }
 
 /**

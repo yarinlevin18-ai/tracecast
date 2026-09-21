@@ -22,7 +22,7 @@ const trace: Trace = {
 
 describe("ReplayView", () => {
   it("starts on the first step and reveals more as you step forward", () => {
-    render(<ReplayView trace={trace} warnings={[]} />);
+    render(<ReplayView trace={trace} />);
     expect(screen.getByText("first")).toBeTruthy();
     expect(screen.queryByText("last")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Next step" }));
@@ -34,7 +34,7 @@ describe("ReplayView", () => {
   });
 
   it("leaves space to a focused button so it is not handled twice", () => {
-    render(<ReplayView trace={trace} warnings={[]} />);
+    render(<ReplayView trace={trace} />);
     const play = screen.getByRole("button", { name: "Play" });
     play.focus();
     fireEvent.keyDown(play, { key: " " });
@@ -44,7 +44,7 @@ describe("ReplayView", () => {
   });
 
   it("responds to keyboard navigation", () => {
-    render(<ReplayView trace={trace} warnings={[]} />);
+    render(<ReplayView trace={trace} />);
     fireEvent.keyDown(window, { key: "End" });
     expect(screen.getByText("last")).toBeTruthy();
     fireEvent.keyDown(window, { key: "Home" });
@@ -52,7 +52,7 @@ describe("ReplayView", () => {
   });
 
   it("starts playing on mount when autoplay is set", async () => {
-    render(<ReplayView trace={trace} warnings={[]} autoplay />);
+    render(<ReplayView trace={trace} autoplay />);
     await waitFor(() => expect(screen.getByRole("button", { name: "Pause" })).toBeTruthy());
   });
 });

@@ -11,7 +11,7 @@ import { PlayerBar } from "./PlayerBar";
 import { usePlayer } from "./usePlayer";
 import { useReplayKeys } from "./useReplayKeys";
 
-type Props = { trace: Trace; warnings: string[]; compact?: boolean; autoplay?: boolean };
+type Props = { trace: Trace; compact?: boolean; autoplay?: boolean };
 
 /** Number of rows whose step index is at most `index` (rows are in step order). */
 function visibleCount(rows: { step: { index: number } }[], index: number): number {

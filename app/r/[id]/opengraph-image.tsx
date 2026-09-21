@@ -1,10 +1,10 @@
 import type { CSSProperties } from "react";
 import { ImageResponse } from "next/og";
 import { loadSharedTrace } from "@/lib/share/load";
-import { clampTitle, describeTrace, KIND_COLORS, kindStrip } from "@/lib/share/og";
+import { clampTitle, footerLine, KIND_COLORS, kindStrip, toolCallsLabel } from "@/lib/share/og";
 import { formatDuration, formatTokens } from "@/lib/trace/format";
 
-// Shares are immutable once uploaded, so crawlers can share a cached image for a few minutes.
+// Cached per id for five minutes. Shares only change by expiring, and expiry is measured in days, so a briefly stale card is fine.
 export const revalidate = 300;
 export const alt = "Tracecast replay";
 export const size = { width: 1200, height: 630 };
@@ -45,7 +45,7 @@ export default async function Image({ params }: Params) {
     formatDuration(trace.totals.durationMs),
     `${formatTokens(trace.totals.inputTokens)} in`,
     `${formatTokens(trace.totals.outputTokens)} out`,
-    `${trace.totals.toolCalls} tool calls`,
+    toolCallsLabel(trace.totals.toolCalls),
   ].filter((c): c is string => Boolean(c));
   const strip = kindStrip(trace.steps, CELLS);
 
@@ -57,7 +57,6 @@ export default async function Image({ params }: Params) {
             <div style={{ width: 14, height: 14, borderRadius: 999, background: "#38bdf8" }} />
             Tracecast
           </div>
-          <div style={{ fontSize: 22, color: "#71717a" }}>{`${trace.steps.length} steps`}</div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 22, marginTop: 56 }}>
@@ -90,7 +89,7 @@ export default async function Image({ params }: Params) {
               <div key={i} style={{ flex: 1, borderRadius: 4, background: KIND_COLORS[kind], opacity: kind === "system" ? 0.5 : 0.9 }} />
             ))}
           </div>
-          <div style={{ fontSize: 20, color: "#71717a" }}>{describeTrace(trace)}</div>
+          <div style={{ fontSize: 20, color: "#71717a" }}>{footerLine(trace)}</div>
         </div>
       </div>
     ),

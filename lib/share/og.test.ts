@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampTitle, describeTrace, kindStrip } from "./og";
+import { clampTitle, describeTrace, footerLine, kindStrip, toolCallsLabel } from "./og";
 import type { Step, Trace } from "@/lib/trace/types";
 
 const T = "2026-09-21T10:00:00.000Z";
@@ -20,6 +20,24 @@ describe("clampTitle", () => {
     expect(clampTitle("Build the thing", 80)).toBe("Build the thing");
     expect(clampTitle("one two three four five", 12)).toBe("one two...");
     expect(clampTitle("x".repeat(100), 10)).toBe("xxxxxxx...");
+  });
+
+  it("does not slice from the end when max is smaller than the ellipsis", () => {
+    expect(clampTitle("hello world", 2)).toBe("...");
+  });
+});
+
+describe("toolCallsLabel", () => {
+  it("pluralizes tool call counts", () => {
+    expect(toolCallsLabel(1)).toBe("1 tool call");
+    expect(toolCallsLabel(2)).toBe("2 tool calls");
+  });
+});
+
+describe("footerLine", () => {
+  it("reports step count and recording date", () => {
+    const t = { ...trace, startedAt: "2026-09-21T10:00:00.000Z", steps: [step(0, "user"), step(1, "assistant")] };
+    expect(footerLine(t)).toBe("2 steps, recorded Sep 21, 2026");
   });
 });
 

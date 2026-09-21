@@ -40,7 +40,7 @@ export default function Home() {
           }}
           onShare={() => setSharing(true)}
         />
-        {mode === "replay" ? <ReplayView trace={result.trace} warnings={result.warnings} /> : <TraceView result={result} />}
+        {mode === "replay" ? <ReplayView trace={result.trace} /> : <TraceView result={result} />}
         {sharing && <ShareDialog trace={result.trace} onClose={() => setSharing(false)} />}
       </>
     );

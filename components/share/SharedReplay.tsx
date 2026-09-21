@@ -13,7 +13,7 @@ export function SharedReplay({ trace }: { trace: Trace }) {
           Replay your own session
         </Link>
       </div>
-      <ReplayView trace={trace} warnings={[]} />
+      <ReplayView trace={trace} />
     </>
   );
 }

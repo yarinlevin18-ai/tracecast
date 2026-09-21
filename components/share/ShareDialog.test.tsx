@@ -74,4 +74,8 @@ describe("embedSnippet", () => {
   it("maps the share url to the embed url", () => {
     expect(embedSnippet("https://tracecast.app/r/AbCdEfGhIjKl")).toContain('src="https://tracecast.app/embed/AbCdEfGhIjKl"');
   });
+
+  it("leaves a url with no trailing 12 char id as is", () => {
+    expect(embedSnippet("http://x/r/short")).toContain('src="http://x/r/short"');
+  });
 });

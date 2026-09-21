@@ -8,11 +8,11 @@ export function EmbedReplay({ trace, shareUrl, autoplay }: { trace: Trace; share
     <>
       <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-6 pt-4">
         <span className="text-xs font-semibold tracking-tight text-zinc-400">Tracecast</span>
-        <a href={shareUrl} target="_blank" rel="noopener" className="text-xs text-zinc-500 hover:text-zinc-200">
+        <a href={shareUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-zinc-500 hover:text-zinc-200">
           Open replay
         </a>
       </div>
-      <ReplayView trace={trace} warnings={[]} compact autoplay={autoplay} />
+      <ReplayView trace={trace} compact autoplay={autoplay} />
     </>
   );
 }

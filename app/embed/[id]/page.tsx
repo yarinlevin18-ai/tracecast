@@ -6,7 +6,7 @@ import { loadSharedTrace } from "@/lib/share/load";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
-type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ autoplay?: string }> };
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ autoplay?: string | string[] }> };
 
 export default async function EmbedPage({ params, searchParams }: Props) {
   const [{ id }, { autoplay }] = await Promise.all([params, searchParams]);
