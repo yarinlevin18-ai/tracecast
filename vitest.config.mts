@@ -7,5 +7,10 @@ export default defineConfig({
     environment: "node",
     globals: true,
   },
-  resolve: { alias: { "@": import.meta.dirname } },
+  resolve: {
+    alias: {
+      "@": import.meta.dirname,
+      "server-only": import.meta.dirname + "/lib/test/server-only.ts",
+    },
+  },
 });
