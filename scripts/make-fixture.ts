@@ -21,7 +21,10 @@ function redactDeep(value: unknown): unknown {
     const obj = value as Obj;
     if (obj.type === "image") return { type: "image" };
     const out: Obj = {};
-    for (const [k, v] of Object.entries(obj)) out[k] = redactDeep(v);
+    for (const [k, v] of Object.entries(obj)) {
+      if (obj.type === "thinking" && k === "signature") continue;
+      out[k] = redactDeep(v);
+    }
     return out;
   }
   return value;
@@ -34,6 +37,7 @@ function stripLine(raw: string): string | null {
   } catch {
     return null;
   }
+  if (!line || typeof line !== "object") return null;
   if (!KEEP_TYPES.has(String(line.type))) return null;
 
   const out = pick(line, KEEP_LINE_KEYS);
