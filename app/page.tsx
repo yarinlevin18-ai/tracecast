@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { DropZone } from "@/components/trace/DropZone";
+import { Landing } from "@/components/landing/Landing";
 import { TopBar, type ViewMode } from "@/components/trace/TopBar";
 import { TraceView } from "@/components/trace/TraceView";
 import { ReplayView } from "@/components/replay/ReplayView";
@@ -46,11 +46,5 @@ export default function Home() {
     );
   }
 
-  return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center px-6 py-16">
-      <h1 className="text-3xl font-semibold tracking-tight text-zinc-50">Tracecast</h1>
-      <p className="mt-2 mb-8 text-base text-zinc-400">Turn a Claude Code session into a polished, shareable replay.</p>
-      <DropZone onFiles={parseFiles} error={error} />
-    </main>
-  );
+  return <Landing onFiles={parseFiles} error={error} />;
 }

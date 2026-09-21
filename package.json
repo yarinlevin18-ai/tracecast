@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "fixture": "tsx scripts/make-fixture.ts"
+    "fixture": "tsx scripts/make-fixture.ts",
+    "demo": "tsx scripts/make-demo.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
