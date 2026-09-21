@@ -60,7 +60,7 @@ export default async function Image({ params }: Params) {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 22, marginTop: 56 }}>
-          <div style={{ fontSize: 56, fontWeight: 700, lineHeight: 1.15, color: "#fafafa", maxWidth: 1072, overflow: "hidden", wordBreak: "break-all" }}>{clampTitle(trace.title, 90)}</div>
+          <div style={{ fontSize: 56, fontWeight: 700, lineHeight: 1.15, color: "#fafafa", maxWidth: 1072, overflow: "hidden", wordBreak: "break-word" }}>{clampTitle(trace.title, 90)}</div>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             {chips.map((c) => (
               <div
