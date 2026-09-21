@@ -83,12 +83,13 @@ function Body({ row, status }: { row: TimelineRow; status?: ToolStatus }) {
 }
 
 function ToolStatusMark({ status }: { status?: ToolStatus }) {
+  const reduced = useReducedMotion();
   if (status === "pending") {
     return (
       <span className="flex items-center gap-1.5 text-[11px] text-amber-300">
         <motion.span
           className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400"
-          animate={pulseAnimate}
+          animate={reduced ? undefined : pulseAnimate}
           transition={pulseTransition}
           aria-hidden
         />
