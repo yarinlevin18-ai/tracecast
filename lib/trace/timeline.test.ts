@@ -68,6 +68,18 @@ describe("buildTimeline", () => {
     expect(rows.map((r) => r.step.id)).toEqual(["c1"]);
     expect(rows[0].result?.output).toBe("first");
   });
+
+  it("records the step index of the folded result", () => {
+    const rows = buildTimeline(
+      trace([
+        step({ id: "c1", kind: "tool_call", tool: { name: "Read", input: {}, callId: "call-1" } }),
+        step({ id: "u", kind: "user", text: "meanwhile" }),
+        step({ id: "r1", kind: "tool_result", result: { callId: "call-1", output: "ok", isError: false } }),
+      ])
+    );
+    expect(rows[0].resultIndex).toBe(2);
+    expect(rows[1].resultIndex).toBeUndefined();
+  });
 });
 
 describe("shouldVirtualize", () => {

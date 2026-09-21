@@ -7,6 +7,8 @@ export type TimelineRow = {
   depth: 0 | 1;
   /** The tool_result folded into a tool_call row, when found. */
   result?: NonNullable<Step["result"]>;
+  /** Index of the step that carried the folded result. */
+  resultIndex?: number;
 };
 
 export const VIRTUALIZE_ABOVE = 300;
@@ -17,11 +19,11 @@ export function shouldVirtualize(rowCount: number): boolean {
 
 /** Steps in order, with tool results folded into their calls. */
 export function buildTimeline(trace: Trace): TimelineRow[] {
-  const resultByCall = new Map<string, NonNullable<Step["result"]>>();
+  const resultByCall = new Map<string, { result: NonNullable<Step["result"]>; index: number }>();
   const callIds = new Set<string>();
   for (const s of trace.steps) {
     if (s.kind === "tool_call" && s.tool) callIds.add(s.tool.callId);
-    if (s.kind === "tool_result" && s.result && !resultByCall.has(s.result.callId)) resultByCall.set(s.result.callId, s.result);
+    if (s.kind === "tool_result" && s.result && !resultByCall.has(s.result.callId)) resultByCall.set(s.result.callId, { result: s.result, index: s.index });
   }
 
   const rows: TimelineRow[] = [];
@@ -30,7 +32,10 @@ export function buildTimeline(trace: Trace): TimelineRow[] {
     const row: TimelineRow = { key: s.id, step: s, depth: s.parentId ? 1 : 0 };
     if (s.kind === "tool_call" && s.tool) {
       const r = resultByCall.get(s.tool.callId);
-      if (r) row.result = r;
+      if (r) {
+        row.result = r.result;
+        row.resultIndex = r.index;
+      }
     }
     rows.push(row);
   }
