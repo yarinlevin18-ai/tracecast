@@ -49,6 +49,25 @@ describe("buildTimeline", () => {
     const rows = buildTimeline(trace([step({ id: "x", kind: "system", text: "Context compacted" })]));
     expect(rows[0].key).toBe("x");
   });
+
+  it("leaves result undefined for a tool_call with no matching result", () => {
+    const rows = buildTimeline(
+      trace([step({ id: "c1", kind: "tool_call", tool: { name: "Read", input: {}, callId: "call-1" } })])
+    );
+    expect(rows[0].result).toBeUndefined();
+  });
+
+  it("keeps the first result when two tool_results share a callId", () => {
+    const rows = buildTimeline(
+      trace([
+        step({ id: "c1", kind: "tool_call", tool: { name: "Read", input: {}, callId: "call-1" } }),
+        step({ id: "r1", kind: "tool_result", result: { callId: "call-1", output: "first", isError: false } }),
+        step({ id: "r2", kind: "tool_result", result: { callId: "call-1", output: "second", isError: false } }),
+      ])
+    );
+    expect(rows.map((r) => r.step.id)).toEqual(["c1"]);
+    expect(rows[0].result?.output).toBe("first");
+  });
 });
 
 describe("shouldVirtualize", () => {

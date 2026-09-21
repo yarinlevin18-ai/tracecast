@@ -21,6 +21,12 @@ describe("formatDuration", () => {
     expect(formatDuration(3720000)).toBe("1h 2m");
     expect(formatDuration(162780981)).toBe("1d 21h");
   });
+
+  it("rolls seconds over into the next unit instead of showing 60", () => {
+    expect(formatDuration(119600)).toBe("2m 0s");
+    expect(formatDuration(59500)).toBe("1m 0s");
+    expect(formatDuration(3599600)).toBe("1h 0m");
+  });
 });
 
 describe("formatOffset", () => {

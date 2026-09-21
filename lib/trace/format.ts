@@ -12,14 +12,21 @@ function trim(x: number): string {
 
 /** Two most significant units: "3.4s", "1m 5s", "1h 2m", "1d 21h". */
 export function formatDuration(ms: number): string {
-  const s = ms / 1000;
-  if (s < 60) return `${s < 10 ? s.toFixed(1).replace(/\.0$/, "") : Math.round(s)}s`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ${Math.round(s % 60)}s`;
+  if (ms < 10000) {
+    const s = ms / 1000;
+    return `${s.toFixed(1).replace(/\.0$/, "")}s`;
+  }
+  const total = Math.round(ms / 1000);
+  if (total < 60) return `${total}s`;
+  const s = total % 60;
+  const m = Math.floor(total / 60);
+  if (m < 60) return `${m}m ${s}s`;
+  const mm = m % 60;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ${m % 60}m`;
+  if (h < 24) return `${h}h ${mm}m`;
+  const hh = h % 24;
   const d = Math.floor(h / 24);
-  return `${d}d ${h % 24}h`;
+  return `${d}d ${hh}h`;
 }
 
 /** Offset from session start: "+1:05" or "+1:02:05". */

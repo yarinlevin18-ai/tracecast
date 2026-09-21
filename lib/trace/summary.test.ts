@@ -25,4 +25,14 @@ describe("toolSummary", () => {
     expect(s.endsWith("...")).toBe(true);
     expect(toolSummary({ name: "Other", input: {}, callId: "c" })).toBe("");
   });
+
+  it("shows notebook path, fetch url and search query", () => {
+    expect(toolSummary({ name: "NotebookEdit", input: { notebook_path: "n.ipynb" }, callId: "c" })).toBe("n.ipynb");
+    expect(toolSummary({ name: "WebFetch", input: { url: "https://x" }, callId: "c" })).toBe("https://x");
+    expect(toolSummary({ name: "WebSearch", input: { query: "q" }, callId: "c" })).toBe("q");
+  });
+
+  it("treats a non-object input as empty", () => {
+    expect(toolSummary({ name: "Other", input: "x", callId: "c" })).toBe("");
+  });
 });
