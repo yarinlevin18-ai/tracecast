@@ -59,7 +59,7 @@ export function PlayerBar({ player }: { player: Player }) {
           />
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-zinc-400 sm:gap-3">
+        <div className="flex flex-wrap items-center gap-2 gap-y-2 text-xs text-zinc-400 sm:gap-3">
           <button type="button" aria-label="Previous step" onClick={() => player.stepBy(-1)} className="rounded p-1 hover:text-zinc-100">
             <SkipBack className="h-4 w-4" aria-hidden />
           </button>

@@ -44,7 +44,9 @@ export async function POST(req: Request) {
     throw err;
   }
 
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
+  // Vercel sets x-real-ip from the connection and rewrites x-forwarded-for, so
+  // neither can be spoofed there; behind another proxy, check its behaviour.
+  const ip = req.headers.get("x-real-ip") || req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const limit = await checkAndRecordShare(client as unknown as LimitClient, hashIp(ip, process.env.SHARE_IP_SALT || "tracecast"));
   if (!limit.allowed) {
     return NextResponse.json({ error: "Too many shares from this network. Try again in an hour." }, { status: 429 });

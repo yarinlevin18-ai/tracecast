@@ -14,8 +14,11 @@ function pick(src: Obj, keys: readonly string[]): Obj {
   return out;
 }
 
+// The owner's login shows up as a bare word in ls output; the path patterns miss it.
+const LOGIN = /\byarin\b/gi;
+
 function redactDeep(value: unknown): unknown {
-  if (typeof value === "string") return redactText(value);
+  if (typeof value === "string") return redactText(value).replace(LOGIN, "dev");
   if (Array.isArray(value)) return value.map(redactDeep);
   if (value && typeof value === "object") {
     const obj = value as Obj;
