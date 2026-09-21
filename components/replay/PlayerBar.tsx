@@ -59,7 +59,7 @@ export function PlayerBar({ player }: { player: Player }) {
           />
         </div>
 
-        <div className="flex items-center gap-3 text-xs text-zinc-400">
+        <div className="flex items-center gap-2 text-xs text-zinc-400 sm:gap-3">
           <button type="button" aria-label="Previous step" onClick={() => player.stepBy(-1)} className="rounded p-1 hover:text-zinc-100">
             <SkipBack className="h-4 w-4" aria-hidden />
           </button>
@@ -75,15 +75,15 @@ export function PlayerBar({ player }: { player: Player }) {
             <SkipForward className="h-4 w-4" aria-hidden />
           </button>
 
-          <span className="ml-2 font-mono tabular-nums">
+          <span className="ml-1 whitespace-nowrap font-mono tabular-nums sm:ml-2">
             <motion.span>{elapsed}</motion.span> <span className="text-zinc-600">/</span> <span>{clock(player.totalMs)}</span>
           </span>
 
-          <span className="ml-auto font-mono tabular-nums text-zinc-500">
+          <span className="ml-auto whitespace-nowrap font-mono tabular-nums text-zinc-500">
             {player.count === 0 ? "0 / 0" : `${player.index + 1} / ${player.count}`}
           </span>
 
-          <div className="flex overflow-hidden rounded-md border border-zinc-800">
+          <div className="flex shrink-0 overflow-hidden rounded-md border border-zinc-800">
             {SPEEDS.map((s) => (
               <button
                 key={s}

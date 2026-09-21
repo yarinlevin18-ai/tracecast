@@ -11,6 +11,9 @@ export function useReplayKeys(player: Player) {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (target && EDITABLE.has(target.tagName)) return;
+      // A focused button already toggles on space through its native activation;
+      // handling it here too would fire the action twice.
+      if (e.key === " " && target?.tagName === "BUTTON") return;
       switch (e.key) {
         case " ":
           e.preventDefault();

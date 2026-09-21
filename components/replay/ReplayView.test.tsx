@@ -33,6 +33,16 @@ describe("ReplayView", () => {
     expect(screen.getByText("last")).toBeTruthy();
   });
 
+  it("leaves space to a focused button so it is not handled twice", () => {
+    render(<ReplayView trace={trace} warnings={[]} />);
+    const play = screen.getByRole("button", { name: "Play" });
+    play.focus();
+    fireEvent.keyDown(play, { key: " " });
+    expect(screen.getByRole("button", { name: "Play" })).toBeTruthy();
+    fireEvent.keyDown(window, { key: " " });
+    expect(screen.getByRole("button", { name: "Pause" })).toBeTruthy();
+  });
+
   it("responds to keyboard navigation", () => {
     render(<ReplayView trace={trace} warnings={[]} />);
     fireEvent.keyDown(window, { key: "End" });
