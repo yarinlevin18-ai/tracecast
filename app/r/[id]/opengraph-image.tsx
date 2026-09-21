@@ -4,7 +4,8 @@ import { loadSharedTrace } from "@/lib/share/load";
 import { clampTitle, describeTrace, KIND_COLORS, kindStrip } from "@/lib/share/og";
 import { formatDuration, formatTokens } from "@/lib/trace/format";
 
-export const dynamic = "force-dynamic";
+// Shares are immutable once uploaded, so crawlers can share a cached image for a few minutes.
+export const revalidate = 300;
 export const alt = "Tracecast replay";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -60,7 +61,7 @@ export default async function Image({ params }: Params) {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 22, marginTop: 56 }}>
-          <div style={{ fontSize: 56, fontWeight: 700, lineHeight: 1.15, color: "#fafafa" }}>{clampTitle(trace.title, 90)}</div>
+          <div style={{ fontSize: 56, fontWeight: 700, lineHeight: 1.15, color: "#fafafa", maxWidth: 1072, overflow: "hidden", wordBreak: "break-all" }}>{clampTitle(trace.title, 90)}</div>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             {chips.map((c) => (
               <div
@@ -73,6 +74,8 @@ export default async function Image({ params }: Params) {
                   background: "rgba(24,24,27,0.7)",
                   fontSize: 24,
                   color: "#d4d4d8",
+                  maxWidth: 1072,
+                  overflow: "hidden",
                 }}
               >
                 {c}
