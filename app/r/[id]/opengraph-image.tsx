@@ -56,7 +56,7 @@ export default async function Image({ params }: Params) {
             <div style={{ width: 14, height: 14, borderRadius: 999, background: "#38bdf8" }} />
             Tracecast
           </div>
-          <div style={{ fontSize: 22, color: "#71717a" }}>{trace.steps.length} steps</div>
+          <div style={{ fontSize: 22, color: "#71717a" }}>{`${trace.steps.length} steps`}</div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 22, marginTop: 56 }}>
