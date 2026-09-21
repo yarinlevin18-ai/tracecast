@@ -1,33 +1,32 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { cache } from "react";
 import { SharedReplay } from "@/components/share/SharedReplay";
-import { loadTrace, type StoreClient } from "@/lib/share/store";
-import { getAdminClient, SharingNotConfigured } from "@/lib/supabase/admin";
+import { loadSharedTrace } from "@/lib/share/load";
+import { describeTrace } from "@/lib/share/og";
 
 export const dynamic = "force-dynamic";
 
 type Params = { params: Promise<{ id: string }> };
 
-const load = cache(async (id: string) => {
-  try {
-    // SupabaseClient's generic builder types do not line up with the narrow StoreClient slice.
-    return await loadTrace(getAdminClient() as unknown as StoreClient, id);
-  } catch (err) {
-    if (err instanceof SharingNotConfigured) return null;
-    throw err;
-  }
-});
-
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { id } = await params;
-  const trace = await load(id);
-  return trace ? { title: `${trace.title} | Tracecast` } : { title: "Replay not found | Tracecast" };
+  const trace = await loadSharedTrace(id);
+  if (!trace) return { title: "Replay not found | Tracecast", robots: { index: false } };
+  const title = `${trace.title} | Tracecast`;
+  const description = describeTrace(trace);
+  return {
+    title,
+    description,
+    // Shared links are unlisted; keep them out of search engines.
+    robots: { index: false, follow: false },
+    openGraph: { title: trace.title, description, siteName: "Tracecast", type: "website", url: `/r/${id}` },
+    twitter: { card: "summary_large_image", title: trace.title, description },
+  };
 }
 
 export default async function SharePage({ params }: Params) {
   const { id } = await params;
-  const trace = await load(id);
+  const trace = await loadSharedTrace(id);
   if (!trace) notFound();
   return <SharedReplay trace={trace} />;
 }

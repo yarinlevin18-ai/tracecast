@@ -21,3 +21,4 @@ Share links need a Supabase project. Apply `supabase/migrations/0001_traces.sql`
 (dashboard SQL editor, or `supabase link` then `supabase db push`), then copy
 `.env.example` to `.env.local` and fill in the URL and service role key. Without
 them the app works but the Share button reports that sharing is not configured.
+Set `NEXT_PUBLIC_SITE_URL` to the deployed origin so link previews use absolute image URLs.
