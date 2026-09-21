@@ -48,4 +48,14 @@ describe("ShareDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: /create link/i }));
     await waitFor(() => expect(screen.getByText(/not configured/i)).toBeTruthy());
   });
+
+  it("flags a redacted title even when the steps are clean", () => {
+    const titledTrace: Trace = {
+      ...trace,
+      title: "/Users/alice/proj",
+      steps: [step({ id: "ok", kind: "assistant", text: "clean" })],
+    };
+    render(<ShareDialog trace={titledTrace} onClose={() => {}} />);
+    expect(screen.getByText(/title contained/i)).toBeTruthy();
+  });
 });

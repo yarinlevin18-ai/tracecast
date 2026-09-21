@@ -10,7 +10,7 @@ export type StoreClient = {
   storage: {
     from: (bucket: string) => {
       upload: (path: string, body: string, opts: { contentType: string; upsert: boolean }) => Promise<{ error: { message: string } | null }>;
-      download: (path: string) => Promise<{ data: Blob | null; error: { message: string } | null }>;
+      download: (path: string) => Promise<{ data: Blob | null; error: { message: string; statusCode?: string | number } | null }>;
       remove: (paths: string[]) => Promise<{ error: { message: string } | null }>;
     };
   };
@@ -54,6 +54,17 @@ export async function loadTrace(client: StoreClient, id: string, now: Date = new
   if (expiresAt !== null && expiresAt <= now.getTime()) return null;
 
   const file = await client.storage.from(BUCKET).download(String(row.storage_path));
-  if (file.error || !file.data) return null;
-  return validateTrace(JSON.parse(await file.data.text()));
+  if (file.error) {
+    const { statusCode, message } = file.error;
+    const missing = statusCode === "404" || statusCode === 404 || /not found/i.test(message);
+    if (missing) return null;
+    throw new Error(`download failed: ${message}`);
+  }
+  if (!file.data) return null;
+
+  try {
+    return validateTrace(JSON.parse(await file.data.text()));
+  } catch {
+    return null;
+  }
 }

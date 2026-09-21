@@ -1,7 +1,7 @@
 import { matchedPatterns, redactText } from "@/lib/trace/secrets";
 import type { Step, Trace } from "@/lib/trace/types";
 
-export type RedactionField = "text" | "tool.input" | "result.output";
+export type RedactionField = "text" | "tool.input" | "result.output" | "agent";
 
 export type RedactionHit = {
   stepId: string;
@@ -19,7 +19,10 @@ function redactDeep(value: unknown, matched: Set<string>): unknown {
   if (Array.isArray(value)) return value.map((v) => redactDeep(v, matched));
   if (value && typeof value === "object") {
     const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value as Record<string, unknown>)) out[k] = redactDeep(v, matched);
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (k === "__proto__") continue;
+      out[k] = redactDeep(v, matched);
+    }
     return out;
   }
   return value;
@@ -36,6 +39,14 @@ function redactStep(step: Step): { step: Step; hit?: RedactionHit } {
       fields.push("text");
       names.forEach((n) => patterns.add(n));
       out.text = redactText(step.text);
+    }
+  }
+  {
+    const names = matchedPatterns(step.agent);
+    if (names.length) {
+      fields.push("agent");
+      names.forEach((n) => patterns.add(n));
+      out.agent = redactText(step.agent);
     }
   }
   if (step.tool) {

@@ -37,7 +37,14 @@ export function ShareDialog({ trace, onClose }: Props) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
   const stepById = useMemo(() => new Map(redacted.trace.steps.map((s) => [s.id, s])), [redacted]);
+  const titleChanged = redacted.trace.title !== trace.title;
 
   function finalTrace(): Trace {
     let t = redacted.trace;
@@ -85,7 +92,8 @@ export function ShareDialog({ trace, onClose }: Props) {
               <button
                 type="button"
                 onClick={async () => {
-                  await navigator.clipboard?.writeText(phase.url);
+                  if (!navigator.clipboard) return;
+                  await navigator.clipboard.writeText(phase.url);
                   setCopied(true);
                 }}
                 className="flex items-center gap-1 rounded-md bg-zinc-100 px-3 py-2 text-xs font-medium text-zinc-900"
@@ -100,8 +108,10 @@ export function ShareDialog({ trace, onClose }: Props) {
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
               <p className="text-zinc-300">
                 {hits.length === 0
-                  ? "No secrets or personal paths found. Review is optional."
-                  : `${hits.length} step${hits.length === 1 ? "" : "s"} had secrets or personal paths. They are redacted below; edit or remove anything else you would rather not publish.`}
+                  ? titleChanged
+                    ? "The title contained a secret or personal path and was redacted."
+                    : "No secrets or personal paths found. Review is optional."
+                  : `${hits.length} step${hits.length === 1 ? "" : "s"} had secrets or personal paths. They are redacted below; edit or remove anything else you would rather not publish.${titleChanged ? " The title was redacted too." : ""}`}
               </p>
               <ul className="mt-4 space-y-3">
                 {hits.map((h) => {

@@ -61,4 +61,23 @@ describe("POST /api/share", () => {
     const res = await POST(new Request("http://localhost/api/share", { method: "POST", body: "{not json" }));
     expect(res.status).toBe(400);
   });
+
+  it("answers 413 when content-length says the body is too large", async () => {
+    const res = await POST(
+      new Request("http://localhost/api/share", {
+        method: "POST",
+        body: JSON.stringify({ trace }),
+        headers: { "content-type": "application/json", "content-length": "99999999" },
+      })
+    );
+    expect(res.status).toBe(413);
+    expect((await res.json()).error).toBe("trace is too large to share");
+  });
+
+  it("answers 502 when the upload throws", async () => {
+    uploadTrace.mockRejectedValue(new Error("boom"));
+    const res = await post({ trace, expiresInDays: null });
+    expect(res.status).toBe(502);
+    expect((await res.json()).error).toBe("upload failed, try again");
+  });
 });

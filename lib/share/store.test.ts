@@ -14,7 +14,7 @@ const trace: Trace = {
 
 function fake(row: Record<string, unknown> | null = null, file: string | null = null) {
   const upload = vi.fn(async () => ({ error: null }));
-  const download = vi.fn(async () => (file === null ? { data: null, error: { message: "missing" } } : { data: new Blob([file]), error: null }));
+  const download = vi.fn(async () => (file === null ? { data: null, error: { message: "Object not found", statusCode: "404" } } : { data: new Blob([file]), error: null }));
   const insert = vi.fn(async (row: Record<string, unknown>) => {
     void row;
     return { error: null };
@@ -91,5 +91,27 @@ describe("loadTrace", () => {
     const f = fake();
     expect(await loadTrace(f.client, "../x")).toBeNull();
     expect(f.maybeSingle).not.toHaveBeenCalled();
+  });
+
+  it("returns null for a corrupt (non JSON) stored body", async () => {
+    const f = fake({ id: "x", storage_path: "x.json", expires_at: null }, "{not json");
+    expect(await loadTrace(f.client, "AbCdEfGhIjKl")).toBeNull();
+  });
+
+  it("returns null for a stored body that is valid JSON but fails validation", async () => {
+    const f = fake({ id: "x", storage_path: "x.json", expires_at: null }, JSON.stringify({ nope: true }));
+    expect(await loadTrace(f.client, "AbCdEfGhIjKl")).toBeNull();
+  });
+
+  it("returns null when the download error means the object is missing", async () => {
+    const f = fake({ id: "x", storage_path: "x.json", expires_at: null }, null);
+    f.download.mockResolvedValueOnce({ data: null, error: { message: "Object not found", statusCode: "404" } } as never);
+    expect(await loadTrace(f.client, "AbCdEfGhIjKl")).toBeNull();
+  });
+
+  it("throws when the download error is not a missing-object error", async () => {
+    const f = fake({ id: "x", storage_path: "x.json", expires_at: null }, null);
+    f.download.mockResolvedValueOnce({ data: null, error: { message: "socket hang up" } } as never);
+    await expect(loadTrace(f.client, "AbCdEfGhIjKl")).rejects.toThrow(/download failed/);
   });
 });

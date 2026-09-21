@@ -47,4 +47,20 @@ describe("redactTrace", () => {
   it("returns no hits for a clean trace", () => {
     expect(redactTrace(trace([step({ id: "u", kind: "user", text: "hello" })])).hits).toEqual([]);
   });
+
+  it("redacts a personal path in step.agent", () => {
+    const { trace: out, hits } = redactTrace(trace([step({ id: "s", kind: "subagent", agent: "explore /Users/alice/repo" })]));
+    expect(out.steps[0].agent).toBe("explore /Users/dev/repo");
+    expect(hits).toHaveLength(1);
+    expect(hits[0].fields).toContain("agent");
+  });
+
+  it("skips a __proto__ key from JSON.parse instead of reassigning the prototype", () => {
+    const input = JSON.parse('{"__proto__":{"x":1},"a":"b"}');
+    const { trace: out } = redactTrace(trace([step({ id: "c", kind: "tool_call", tool: { name: "X", input, callId: "1" } })]));
+    const result = out.steps[0].tool!.input as Record<string, unknown>;
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+    expect(result.x).toBeUndefined();
+    expect(result.a).toBe("b");
+  });
 });

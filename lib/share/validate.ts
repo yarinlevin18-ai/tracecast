@@ -1,6 +1,7 @@
 import type { Step, StepKind, Trace } from "@/lib/trace/types";
 
-export const MAX_TRACE_BYTES = 5 * 1024 * 1024;
+// Vercel route handlers reject bodies above 4.5 MB, so the app cap stays under it.
+export const MAX_TRACE_BYTES = 4 * 1024 * 1024;
 
 export class ValidationError extends Error {
   constructor(message: string) {

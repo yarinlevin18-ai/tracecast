@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient, SharingNotConfigured } from "@/lib/supabase/admin";
 import { uploadTrace, type StoreClient } from "@/lib/share/store";
-import { ValidationError, validateTrace } from "@/lib/share/validate";
+import { MAX_TRACE_BYTES, ValidationError, validateTrace } from "@/lib/share/validate";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -9,6 +9,11 @@ export const maxDuration = 30;
 const EXPIRY_CHOICES = new Set([7, 30]);
 
 export async function POST(req: Request) {
+  const contentLength = Number(req.headers.get("content-length"));
+  if (Number.isFinite(contentLength) && contentLength > MAX_TRACE_BYTES) {
+    return NextResponse.json({ error: "trace is too large to share" }, { status: 413 });
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -20,7 +25,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "expiresInDays must be 7, 30 or null" }, { status: 400 });
   }
 
-  // Bodies above MAX_TRACE_BYTES fail inside validateTrace, which is the effective size cap.
+  // The content-length check above catches most oversized bodies; validateTrace is the backstop.
   let trace;
   try {
     trace = validateTrace(rawTrace);
