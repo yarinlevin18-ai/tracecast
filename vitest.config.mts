@@ -3,7 +3,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   esbuild: { jsx: "automatic" },
   test: {
-    include: ["lib/**/*.test.ts", "scripts/**/*.test.ts", "components/**/*.test.tsx"],
+    include: ["lib/**/*.test.ts", "scripts/**/*.test.ts", "components/**/*.test.tsx", "app/**/*.test.ts"],
     environment: "node",
     globals: true,
   },
