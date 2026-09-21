@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ShareDialog } from "./ShareDialog";
+import { embedSnippet, ShareDialog } from "./ShareDialog";
 import type { Step, Trace } from "@/lib/trace/types";
 
 const T = "2026-09-21T10:00:00.000Z";
@@ -57,5 +57,21 @@ describe("ShareDialog", () => {
     };
     render(<ShareDialog trace={titledTrace} onClose={() => {}} />);
     expect(screen.getByText(/title contained/i)).toBeTruthy();
+  });
+
+  it("offers an iframe snippet next to the link", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ id: "AbCdEfGhIjKl", url: "http://x/r/AbCdEfGhIjKl", expiresAt: null }), { status: 201 })));
+    render(<ShareDialog trace={trace} onClose={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: /create link/i }));
+    await waitFor(() => expect(screen.getByLabelText("Embed on your site")).toBeTruthy());
+    const snippet = (screen.getByLabelText("Embed on your site") as HTMLTextAreaElement).value;
+    expect(snippet).toContain('src="http://x/embed/AbCdEfGhIjKl"');
+    expect(snippet).toContain("<iframe");
+  });
+});
+
+describe("embedSnippet", () => {
+  it("maps the share url to the embed url", () => {
+    expect(embedSnippet("https://tracecast.app/r/AbCdEfGhIjKl")).toContain('src="https://tracecast.app/embed/AbCdEfGhIjKl"');
   });
 });

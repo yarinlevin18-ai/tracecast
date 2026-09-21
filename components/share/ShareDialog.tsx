@@ -14,6 +14,12 @@ type Phase = { kind: "review" } | { kind: "busy" } | { kind: "done"; url: string
 
 const PREVIEW = 220;
 
+/** Turns a share url into the matching embed url and an iframe snippet. */
+export function embedSnippet(shareUrl: string): string {
+  const src = shareUrl.replace(/\/r\/([0-9A-Za-z]+)$/, "/embed/$1");
+  return `<iframe src="${src}" width="100%" height="560" style="border:0;border-radius:12px;background:#09090b" loading="lazy" allowfullscreen title="Tracecast replay"></iframe>`;
+}
+
 function preview(step: Step): string {
   const raw = step.text ?? step.result?.output ?? (step.tool ? `${step.tool.name} ${toolSummary(step.tool)}` : "");
   const flat = raw.replace(/\s+/g, " ").trim();
@@ -101,6 +107,17 @@ export function ShareDialog({ trace, onClose }: Props) {
                 {copied ? <Check className="h-3.5 w-3.5" aria-hidden /> : <Copy className="h-3.5 w-3.5" aria-hidden />}
                 {copied ? "Copied" : "Copy"}
               </button>
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="embed-code" className="text-xs text-zinc-400">Embed on your site</label>
+              <textarea
+                id="embed-code"
+                readOnly
+                rows={3}
+                value={embedSnippet(phase.url)}
+                onFocus={(e) => e.currentTarget.select()}
+                className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 font-mono text-[11px] leading-4 text-zinc-300"
+              />
             </div>
           </div>
         ) : (
