@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     include: ["lib/**/*.test.ts", "scripts/**/*.test.ts", "components/**/*.test.tsx"],
     environment: "node",
+    globals: true,
   },
   resolve: { alias: { "@": import.meta.dirname } },
 });
