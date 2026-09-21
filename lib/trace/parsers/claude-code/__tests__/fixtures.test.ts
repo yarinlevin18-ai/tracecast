@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseClaudeCodeSession } from "../index";
@@ -47,7 +47,12 @@ function oracle(raw: Line[]) {
   return { toolUse, toolResult, outputTokens, inputTokens };
 }
 
-const dirs = readdirSync(FIXTURES, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
+// Fixtures are real sessions kept out of the repo; without them these tests skip.
+const dirs = existsSync(FIXTURES) ? readdirSync(FIXTURES).filter((d) => existsSync(join(FIXTURES, d, "main.jsonl"))) : [];
+
+it.skipIf(dirs.length > 0)("skips fixture checks when the fixtures folder is absent", () => {
+  expect(dirs).toEqual([]);
+});
 
 describe.each(dirs)("fixture %s", (name) => {
   const { files, raw } = loadDir(name);

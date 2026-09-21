@@ -42,3 +42,6 @@ yarn-error.log*
 next-env.d.ts
 docs/demo.webm
 docs/.video/
+
+# Real sessions used as local test data; never committed.
+fixtures/

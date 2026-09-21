@@ -39,8 +39,8 @@ Replay: space plays, arrows step, 1/2/4 set speed.
 ## Fixtures and the demo
 
 Fixtures are real sessions, stripped and redacted with
-`npm run fixture -- <session.jsonl> <name>`. Review the output before
-committing. `npm run demo` rebuilds `lib/demo/trace.json` from the
+`npm run fixture -- <session.jsonl> <name>` into `fixtures/<name>/`. The folder
+is gitignored; the fixture tests skip when it is absent. `npm run demo` rebuilds `lib/demo/trace.json` from the
 `subagents` fixture; `npm run gif -- http://localhost:3000` re-records
 `docs/demo.gif` (needs Google Chrome and ffmpeg).
 

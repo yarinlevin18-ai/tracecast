@@ -1,9 +1,8 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { parseClaudeCode } from "@/lib/trace/parsers/claude-code";
+import demo from "@/lib/demo/trace.json";
 import { MAX_TRACE_BYTES, ValidationError, validateTrace } from "./validate";
 
-const real = parseClaudeCode(readFileSync("fixtures/short/main.jsonl", "utf8")).trace;
+const real = validateTrace(demo);
 
 describe("validateTrace", () => {
   it("accepts a parsed fixture unchanged", () => {
