@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ReplayView } from "./ReplayView";
 import type { Trace } from "@/lib/trace/types";
@@ -49,5 +49,10 @@ describe("ReplayView", () => {
     expect(screen.getByText("last")).toBeTruthy();
     fireEvent.keyDown(window, { key: "Home" });
     expect(screen.queryByText("last")).toBeNull();
+  });
+
+  it("starts playing on mount when autoplay is set", async () => {
+    render(<ReplayView trace={trace} warnings={[]} autoplay />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Pause" })).toBeTruthy());
   });
 });
