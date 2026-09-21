@@ -5,7 +5,7 @@ Turn a Claude Code session into a polished, shareable animated replay.
 ## Dev
 
     npm install
-    npm run dev          # http://localhost:3000/dev/parse
+    npm run dev          # http://localhost:3000/dev/parse?fixture=long
     npm test
 
 ## Fixtures

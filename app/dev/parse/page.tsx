@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { parseClaudeCodeSession } from "@/lib/trace/parsers/claude-code";
-import type { ParseResult } from "@/lib/trace/types";
+import type { ParseResult, SessionFile } from "@/lib/trace/types";
 
 const PREVIEW_STEPS = 500;
 
@@ -10,19 +10,52 @@ export default function DevParsePage() {
   const [result, setResult] = useState<ParseResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [ms, setMs] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleFiles(list: FileList | null) {
-    if (!list?.length) return;
-    setBusy(true);
-    const files = await Promise.all(
-      Array.from(list).map(async (f) => ({ name: f.name, text: await f.text() }))
-    );
+  function parseFiles(files: SessionFile[]) {
     const t0 = performance.now();
     const parsed = parseClaudeCodeSession(files);
     setMs(Math.round(performance.now() - t0));
     setResult(parsed);
+  }
+
+  async function handleFiles(list: FileList | null) {
+    if (!list?.length) return;
+    setBusy(true);
+    setError(null);
+    const files = await Promise.all(
+      Array.from(list).map(async (f) => ({ name: f.name, text: await f.text() }))
+    );
+    parseFiles(files);
     setBusy(false);
   }
+
+  // Dev convenience: /dev/parse?fixture=long loads fixtures/long/*.jsonl from the dev server.
+  useEffect(() => {
+    const name = new URLSearchParams(window.location.search).get("fixture");
+    if (!name) return;
+    let cancelled = false;
+    Promise.resolve()
+      .then(() => {
+        setBusy(true);
+        setError(null);
+        return fetch(`/dev/fixtures/${encodeURIComponent(name)}`);
+      })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`fixture "${name}" not found (${res.status})`);
+        const files = (await res.json()) as SessionFile[];
+        if (!cancelled) parseFiles(files);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      })
+      .finally(() => {
+        if (!cancelled) setBusy(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const trace = result?.trace;
   const preview = trace ? { ...trace, steps: trace.steps.slice(0, PREVIEW_STEPS) } : null;
@@ -46,9 +79,18 @@ export default function DevParsePage() {
           onChange={(e) => void handleFiles(e.target.files)}
           className="mx-auto mt-4 block"
         />
+        <p className="mt-4 text-neutral-500">
+          Or load a fixture:{" "}
+          {["short", "subagents", "long"].map((name) => (
+            <a key={name} href={`/dev/parse?fixture=${name}`} className="mx-1 underline">
+              {name}
+            </a>
+          ))}
+        </p>
       </div>
 
       {busy && <p className="mt-4">Parsing...</p>}
+      {error && <p className="mt-4 text-red-600">{error}</p>}
 
       {result && trace && (
         <>
