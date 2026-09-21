@@ -19,12 +19,16 @@ function fake(row: Record<string, unknown> | null = null, file: string | null = 
     void row;
     return { error: null };
   });
+  const remove = vi.fn(async (paths: string[]) => {
+    void paths;
+    return { error: null };
+  });
   const maybeSingle = vi.fn(async () => ({ data: row, error: null }));
   const client: StoreClient = {
-    storage: { from: () => ({ upload, download }) },
+    storage: { from: () => ({ upload, download, remove }) },
     from: () => ({ insert, select: () => ({ eq: () => ({ maybeSingle }) }) }),
   };
-  return { client, upload, download, insert, maybeSingle };
+  return { client, upload, download, insert, remove, maybeSingle };
 }
 
 describe("uploadTrace", () => {
@@ -47,6 +51,19 @@ describe("uploadTrace", () => {
     const f = fake();
     await uploadTrace(f.client, trace, { expiresInDays: null, id: "AbCdEfGhIjKl" });
     expect(f.insert.mock.calls[0][0]).toMatchObject({ expires_at: null });
+  });
+
+  it("rejects a malformed id before touching storage", async () => {
+    const f = fake();
+    await expect(uploadTrace(f.client, trace, { expiresInDays: null, id: "../x" })).rejects.toThrow(/invalid/);
+    expect(f.upload).not.toHaveBeenCalled();
+  });
+
+  it("removes the uploaded file when the row insert fails", async () => {
+    const f = fake();
+    f.insert.mockResolvedValueOnce({ error: { message: "dup" } } as never);
+    await expect(uploadTrace(f.client, trace, { expiresInDays: null, id: "AbCdEfGhIjKl" })).rejects.toThrow(/dup/);
+    expect(f.remove).toHaveBeenCalledWith(["AbCdEfGhIjKl.json"]);
   });
 
   it("throws when the upload fails", async () => {

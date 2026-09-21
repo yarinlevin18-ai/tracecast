@@ -31,6 +31,7 @@ export async function POST(req: Request) {
 
   let client: StoreClient;
   try {
+    // SupabaseClient's generic builder types do not line up with the narrow StoreClient slice.
     client = getAdminClient() as unknown as StoreClient;
   } catch (err) {
     if (err instanceof SharingNotConfigured) return NextResponse.json({ error: err.message }, { status: 503 });

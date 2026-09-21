@@ -11,6 +11,7 @@ export type StoreClient = {
     from: (bucket: string) => {
       upload: (path: string, body: string, opts: { contentType: string; upsert: boolean }) => Promise<{ error: { message: string } | null }>;
       download: (path: string) => Promise<{ data: Blob | null; error: { message: string } | null }>;
+      remove: (paths: string[]) => Promise<{ error: { message: string } | null }>;
     };
   };
   from: (table: string) => {
@@ -25,6 +26,7 @@ export type UploadOptions = { expiresInDays: number | null; now?: Date; id?: str
 
 export async function uploadTrace(client: StoreClient, trace: Trace, opts: UploadOptions): Promise<{ id: string; expiresAt: string | null }> {
   const id = opts.id ?? makeId();
+  if (!isValidId(id)) throw new Error("invalid share id");
   const now = opts.now ?? new Date();
   const expiresAt = opts.expiresInDays ? new Date(now.getTime() + opts.expiresInDays * 86_400_000).toISOString() : null;
   const path = `${id}.json`;
@@ -33,7 +35,11 @@ export async function uploadTrace(client: StoreClient, trace: Trace, opts: Uploa
   if (up.error) throw new Error(`upload failed: ${up.error.message}`);
 
   const ins = await client.from(TABLE).insert({ id, title: trace.title, totals: trace.totals, storage_path: path, expires_at: expiresAt });
-  if (ins.error) throw new Error(`insert failed: ${ins.error.message}`);
+  if (ins.error) {
+    // Best effort: do not leave an orphan file behind when the row fails.
+    await client.storage.from(BUCKET).remove([path]).catch(() => undefined);
+    throw new Error(`insert failed: ${ins.error.message}`);
+  }
 
   return { id, expiresAt };
 }
