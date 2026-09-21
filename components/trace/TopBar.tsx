@@ -2,9 +2,9 @@
 
 export type ViewMode = "replay" | "timeline";
 
-type Props = { mode: ViewMode; onMode: (m: ViewMode) => void; onReset: () => void };
+type Props = { mode: ViewMode; onMode: (m: ViewMode) => void; onReset: () => void; onShare?: () => void };
 
-export function TopBar({ mode, onMode, onReset }: Props) {
+export function TopBar({ mode, onMode, onReset, onShare }: Props) {
   return (
     <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-6 pt-8">
       <span className="text-sm font-semibold tracking-tight text-zinc-300">Tracecast</span>
@@ -22,6 +22,11 @@ export function TopBar({ mode, onMode, onReset }: Props) {
             </button>
           ))}
         </div>
+        {onShare && (
+          <button type="button" onClick={onShare} className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-900 hover:bg-white">
+            Share
+          </button>
+        )}
         <button type="button" onClick={onReset} className="whitespace-nowrap text-xs text-zinc-500 hover:text-zinc-200">
           Load another session
         </button>
