@@ -14,6 +14,7 @@ describe("redactText", () => {
     expect(redactText("OPENAI_API_KEY=abc123 DB_PASSWORD=hunter2")).toBe("OPENAI_API_KEY=REDACTED DB_PASSWORD=REDACTED");
     expect(redactText("mail yarinlevin18@gmail.com now")).toBe("mail user@example.com now");
     expect(redactText("/Users/yarin/Projects/x")).toBe("/Users/dev/Projects/x");
+    expect(redactText("/tmp/claude-501/-Users-yarin-Projects-x/1")).toBe("/tmp/claude-501/-Users-dev-Projects-x/1");
   });
 
   it("masks private key blocks", () => {

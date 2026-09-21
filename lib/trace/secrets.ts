@@ -45,6 +45,7 @@ export const SECRET_PATTERNS: SecretPattern[] = [
     replacement: "user@example.com",
   },
   { name: "home-dir", pattern: /\/Users\/yarin\b/g, replacement: "/Users/dev" },
+  { name: "home-dir-slug", pattern: /-Users-yarin-/g, replacement: "-Users-dev-" },
   { name: "windows-home", pattern: /([A-Za-z]):\\(?:Users\\)?Yarin\b/gi, replacement: "$1:\\Users\\dev" },
 ];
 
