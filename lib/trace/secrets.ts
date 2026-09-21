@@ -33,7 +33,7 @@ export const SECRET_PATTERNS: SecretPattern[] = [
   },
   {
     name: "env-assignment",
-    pattern: /\b([A-Z][A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS))=("[^"]*"|'[^']*'|\S+)/g,
+    pattern: /\b([A-Z][A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASS))=("[^"]*"|'[^']*'|\S+)/gi,
     replacement: "$1=REDACTED",
   },
   { name: "env-line", pattern: /^[A-Z][A-Z0-9_]{2,}=(?!REDACTED\b)\S.*$/gm, replacement: "REDACTED_ENV_LINE" },

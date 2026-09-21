@@ -29,6 +29,10 @@ describe("redactText", () => {
     expect(redactText('DB_PASSWORD="my secret pass" done')).toBe("DB_PASSWORD=REDACTED done");
   });
 
+  it("masks lowercase env assignments", () => {
+    expect(redactText("database_password=hunter2 ok")).toBe("database_password=REDACTED ok");
+  });
+
   it("masks connection strings", () => {
     expect(redactText("postgres://user:pass@localhost:5432/db")).toBe("postgres://user:REDACTED@localhost:5432/db");
     expect(redactText("mongodb+srv://admin:P@ssw0rd!@cluster0.mongodb.net/db")).toBe(
