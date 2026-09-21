@@ -20,6 +20,13 @@ describe("readLines", () => {
       "line 4: not an object, skipped",
     ]);
   });
+
+  it("handles CRLF line endings", () => {
+    const text = JSON.stringify({ uuid: "a" }) + "\r\n" + JSON.stringify({ uuid: "b" }) + "\r\n";
+    const { lines, warnings } = readLines(text);
+    expect(lines.map((l) => l.uuid)).toEqual(["a", "b"]);
+    expect(warnings).toEqual([]);
+  });
 });
 
 describe("toBlocks", () => {
