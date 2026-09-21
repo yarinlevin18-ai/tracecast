@@ -24,4 +24,19 @@ describe("Timeline", () => {
     const { container } = render(<Timeline rows={rows(301)} startedAt={T} />);
     expect(container.querySelector("[data-virtualized]")).toBeTruthy();
   });
+
+  it("passes replay state to rows", () => {
+    const list = rows(3);
+    list[1] = {
+      ...list[1],
+      step: { ...list[1].step, kind: "tool_call", tool: { name: "Read", input: {}, callId: "c" } },
+      result: { callId: "c", output: "", isError: false },
+      resultIndex: 2,
+    };
+    const { container } = render(<Timeline rows={list} startedAt={T} current={1} />);
+    const articles = container.querySelectorAll("article");
+    expect(articles[1].getAttribute("data-active")).toBe("true");
+    expect(articles[0].getAttribute("data-active")).toBeNull();
+    expect(container.textContent).toContain("running");
+  });
 });

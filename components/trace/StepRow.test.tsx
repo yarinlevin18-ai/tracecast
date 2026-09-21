@@ -76,4 +76,21 @@ describe("StepRow", () => {
     render(<StepRow row={r} startedAt={T0} />);
     expect(screen.getByText("failed")).toBeTruthy();
   });
+
+  it("shows a running marker for a pending tool and a check when done", () => {
+    const r = row(
+      { id: "c", kind: "tool_call", tool: { name: "Read", input: { file_path: "a.ts" }, callId: "x" } },
+      { result: { callId: "x", output: "ok", isError: false }, resultIndex: 5 }
+    );
+    const { rerender } = render(<StepRow row={r} startedAt={T0} status="pending" />);
+    expect(screen.getByText("running")).toBeTruthy();
+    rerender(<StepRow row={r} startedAt={T0} status="done" />);
+    expect(screen.queryByText("running")).toBeNull();
+    expect(screen.getByLabelText("Completed")).toBeTruthy();
+  });
+
+  it("marks the active step", () => {
+    render(<StepRow row={row({ id: "u", kind: "user", text: "hi" })} startedAt={T0} active />);
+    expect(screen.getByRole("article").getAttribute("data-active")).toBe("true");
+  });
 });

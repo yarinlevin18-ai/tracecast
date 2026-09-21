@@ -1,26 +1,56 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { shouldVirtualize, type TimelineRow } from "@/lib/trace/timeline";
-import { StepRow } from "./StepRow";
+import { StepRow, type ToolStatus } from "./StepRow";
 
-type Props = { rows: TimelineRow[]; startedAt: string };
+type Props = { rows: TimelineRow[]; startedAt: string; current?: number; follow?: boolean };
 
-export function Timeline({ rows, startedAt }: Props) {
-  if (!shouldVirtualize(rows.length)) {
-    return (
-      <div>
-        {rows.map((row) => (
-          <StepRow key={row.key} row={row} startedAt={startedAt} />
-        ))}
-      </div>
-    );
+/** Derives the active/enter/status props StepRow needs from replay state. */
+function replayProps(row: TimelineRow, current: number | undefined) {
+  if (current === undefined) return {};
+  const active = row.step.index === current;
+  let status: ToolStatus | undefined;
+  if (row.step.kind === "tool_call" && row.result) {
+    const resolved = row.resultIndex === undefined || row.resultIndex <= current;
+    status = !resolved ? "pending" : row.result.isError ? "error" : "done";
   }
-  return <VirtualTimeline rows={rows} startedAt={startedAt} />;
+  return { active, enter: active, status };
 }
 
-function VirtualTimeline({ rows, startedAt }: Props) {
+/** Scroll the current step into view. jsdom has no scrollIntoView. */
+function useFollow(current: number | undefined, follow: boolean, scrollTo: (index: number) => void) {
+  useEffect(() => {
+    if (!follow || current === undefined) return;
+    scrollTo(current);
+  }, [current, follow, scrollTo]);
+}
+
+export function Timeline({ rows, startedAt, current, follow = false }: Props) {
+  if (!shouldVirtualize(rows.length)) {
+    return <PlainTimeline rows={rows} startedAt={startedAt} current={current} follow={follow} />;
+  }
+  return <VirtualTimeline rows={rows} startedAt={startedAt} current={current} follow={follow} />;
+}
+
+function PlainTimeline({ rows, startedAt, current, follow }: Required<Pick<Props, "follow">> & Props) {
+  const scrollTo = useCallback((index: number) => {
+    const el = document.querySelector(`[data-step-index="${index}"]`);
+    if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ block: "end", behavior: "smooth" });
+  }, []);
+  useFollow(current, follow, scrollTo);
+
+  return (
+    <div>
+      {rows.map((row) => (
+        <StepRow key={row.key} row={row} startedAt={startedAt} {...replayProps(row, current)} />
+      ))}
+    </div>
+  );
+}
+
+function VirtualTimeline({ rows, startedAt, current, follow }: Required<Pick<Props, "follow">> & Props) {
   const listRef = useRef<HTMLDivElement>(null);
   // The list offset from the top of the page is read after mount (reading a
   // ref during render is not allowed) and refreshed whenever the page above
@@ -45,6 +75,15 @@ function VirtualTimeline({ rows, startedAt }: Props) {
   });
   const items = virtualizer.getVirtualItems();
 
+  const scrollTo = useCallback(
+    (index: number) => {
+      const rowIndex = rows.findIndex((r) => r.step.index === index);
+      if (rowIndex >= 0) virtualizer.scrollToIndex(rowIndex, { align: "end" });
+    },
+    [rows, virtualizer]
+  );
+  useFollow(current, follow, scrollTo);
+
   return (
     <div ref={listRef} data-virtualized style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
       <div
@@ -58,7 +97,7 @@ function VirtualTimeline({ rows, startedAt }: Props) {
       >
         {items.map((item) => (
           <div key={item.key} data-index={item.index} ref={virtualizer.measureElement}>
-            <StepRow row={rows[item.index]} startedAt={startedAt} />
+            <StepRow row={rows[item.index]} startedAt={startedAt} {...replayProps(rows[item.index], current)} />
           </div>
         ))}
       </div>

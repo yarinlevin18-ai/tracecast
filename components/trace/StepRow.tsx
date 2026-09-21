@@ -1,27 +1,51 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
+import { Check, ChevronRight, X } from "lucide-react";
 import { formatOffset, formatTokens } from "@/lib/trace/format";
 import { toolSummary } from "@/lib/trace/summary";
 import type { TimelineRow } from "@/lib/trace/timeline";
+import { enterAnimate, enterInitial, enterTransition, pulseAnimate, pulseTransition } from "@/components/replay/motion";
 import { StepIcon } from "./StepIcon";
 
 const LONG_TEXT = 1200;
 /** Tool payloads and thinking blocks past this many chars need a click to render fully. */
 const PANEL_MAX = 20000;
 
-type Props = { row: TimelineRow; startedAt: string };
+export type ToolStatus = "pending" | "done" | "error";
 
-export function StepRow({ row, startedAt }: Props) {
+type Props = {
+  row: TimelineRow;
+  startedAt: string;
+  /** Replay: this row is the current step. */
+  active?: boolean;
+  /** Replay: animate the row in on mount. */
+  enter?: boolean;
+  /** Replay: tool call state; undefined in the static timeline. */
+  status?: ToolStatus;
+};
+
+export function StepRow({ row, startedAt, active = false, enter = false, status }: Props) {
   const { step, depth } = row;
+  const reduced = useReducedMotion();
   const offset = formatOffset(Math.max(0, Date.parse(step.at) - Date.parse(startedAt)));
+  const animateIn = enter && !reduced;
 
   return (
-    <article className={`relative flex gap-4 py-3 ${depth === 1 ? "pl-10" : ""}`} data-kind={step.kind} data-depth={depth}>
+    <motion.article
+      initial={animateIn ? enterInitial : false}
+      animate={animateIn ? enterAnimate : undefined}
+      transition={enterTransition}
+      className={`relative flex gap-4 py-3 ${depth === 1 ? "pl-10" : ""}`}
+      data-kind={step.kind}
+      data-depth={depth}
+      data-active={active || undefined}
+      data-step-index={step.index}
+    >
       <div className="relative flex w-6 shrink-0 justify-center">
         <span className="absolute top-0 bottom-0 w-px bg-zinc-800" aria-hidden />
-        <span className="relative mt-1 rounded-full bg-zinc-950 p-1">
+        <span className={`relative mt-1 rounded-full bg-zinc-950 p-1 ${active ? "ring-2 ring-zinc-500/60" : ""}`}>
           <StepIcon kind={step.kind} />
         </span>
       </div>
@@ -36,19 +60,19 @@ export function StepRow({ row, startedAt }: Props) {
             {offset}
           </span>
         </div>
-        <Body row={row} />
+        <Body row={row} status={status} />
       </div>
-    </article>
+    </motion.article>
   );
 }
 
-function Body({ row }: { row: TimelineRow }) {
+function Body({ row, status }: { row: TimelineRow; status?: ToolStatus }) {
   const { step } = row;
   switch (step.kind) {
     case "thinking":
       return <Collapsible label="Thinking" summary={`${(step.text ?? "").length} chars`} muted>{step.text ?? ""}</Collapsible>;
     case "tool_call":
-      return <ToolBody row={row} />;
+      return <ToolBody row={row} status={status} />;
     case "tool_result":
       return <Output output={step.result?.output ?? ""} isError={step.result?.isError ?? false} />;
     case "system":
@@ -58,7 +82,26 @@ function Body({ row }: { row: TimelineRow }) {
   }
 }
 
-function ToolBody({ row }: { row: TimelineRow }) {
+function ToolStatusMark({ status }: { status?: ToolStatus }) {
+  if (status === "pending") {
+    return (
+      <span className="flex items-center gap-1.5 text-[11px] text-amber-300">
+        <motion.span
+          className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400"
+          animate={pulseAnimate}
+          transition={pulseTransition}
+          aria-hidden
+        />
+        running
+      </span>
+    );
+  }
+  if (status === "done") return <Check className="h-3.5 w-3.5 text-emerald-400" aria-label="Completed" role="img" />;
+  if (status === "error") return <X className="h-3.5 w-3.5 text-red-400" aria-label="Failed" role="img" />;
+  return null;
+}
+
+function ToolBody({ row, status }: { row: TimelineRow; status?: ToolStatus }) {
   const { step, result } = row;
   const [open, setOpen] = useState(false);
   if (!step.tool) return null;
@@ -76,7 +119,8 @@ function ToolBody({ row }: { row: TimelineRow }) {
         <ChevronRight className={`h-3 w-3 shrink-0 self-center text-zinc-600 transition-transform ${open ? "rotate-90" : ""}`} aria-hidden />
         <span className="font-medium text-amber-300">{tool.name}</span>
         {summary && <span className="truncate font-mono text-xs text-zinc-400">{summary}</span>}
-        {result?.isError && <span className="rounded bg-red-400/10 px-1.5 text-[11px] text-red-300">failed</span>}
+        <ToolStatusMark status={status} />
+        {result?.isError && status !== "pending" && <span className="rounded bg-red-400/10 px-1.5 text-[11px] text-red-300">failed</span>}
       </button>
       {open && (
         <div className="mt-2 space-y-2">
