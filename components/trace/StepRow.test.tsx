@@ -53,6 +53,21 @@ describe("StepRow", () => {
     expect(screen.getByText("deep thoughts")).toBeTruthy();
   });
 
+  it("caps huge tool output behind a Show all button", () => {
+    const big = "x".repeat(50000);
+    const r = row(
+      { id: "c", kind: "tool_call", tool: { name: "Bash", input: { command: "cat big" }, callId: "x" } },
+      { result: { callId: "x", output: big, isError: false } }
+    );
+    render(<StepRow row={r} startedAt={T0} />);
+    fireEvent.click(screen.getByRole("button", { name: /details/i }));
+    const showAll = screen.getByRole("button", { name: /show all/i });
+    expect(showAll.textContent).toContain("50k chars");
+    expect((showAll.parentElement?.textContent ?? "").length).toBeLessThan(21000);
+    fireEvent.click(showAll);
+    expect(screen.queryByRole("button", { name: /show all/i })).toBeNull();
+  });
+
   it("marks failed tool results", () => {
     const r = row(
       { id: "c", kind: "tool_call", tool: { name: "Bash", input: { command: "false" }, callId: "x" } },

@@ -8,6 +8,8 @@ import type { TimelineRow } from "@/lib/trace/timeline";
 import { StepIcon } from "./StepIcon";
 
 const LONG_TEXT = 1200;
+/** Tool payloads and thinking blocks past this many chars need a click to render fully. */
+const PANEL_MAX = 20000;
 
 type Props = { row: TimelineRow; startedAt: string };
 
@@ -94,7 +96,9 @@ function Panel({ title, children, isError = false }: { title: string; children: 
   return (
     <div className={`rounded-lg border ${isError ? "border-red-900/60" : "border-zinc-800"} bg-zinc-900/60`}>
       <p className="border-b border-zinc-800 px-3 py-1 text-[11px] uppercase tracking-wider text-zinc-500">{title}</p>
-      <pre className="max-h-72 overflow-auto px-3 py-2 font-mono text-xs leading-5 whitespace-pre-wrap text-zinc-300">{children}</pre>
+      <pre className="max-h-72 overflow-auto px-3 py-2 font-mono text-xs leading-5 whitespace-pre-wrap text-zinc-300">
+        <Capped text={children} />
+      </pre>
     </div>
   );
 }
@@ -117,8 +121,25 @@ function Collapsible({ label, summary, muted = false, children }: { label: strin
         <ChevronRight className={`h-3 w-3 transition-transform ${open ? "rotate-90" : ""}`} aria-hidden />
         {label} <span className="text-zinc-600">{summary}</span>
       </button>
-      {open && <p className={`mt-2 whitespace-pre-wrap [overflow-wrap:anywhere] text-sm leading-6 ${muted ? "italic text-zinc-400" : "text-zinc-300"}`}>{children}</p>}
+      {open && <p className={`mt-2 whitespace-pre-wrap [overflow-wrap:anywhere] text-sm leading-6 ${muted ? "italic text-zinc-400" : "text-zinc-300"}`}>
+          <Capped text={children} />
+        </p>}
     </div>
+  );
+}
+
+/** Renders the first PANEL_MAX chars and a button to reveal the rest. */
+function Capped({ text }: { text: string }) {
+  const [all, setAll] = useState(false);
+  if (all || text.length <= PANEL_MAX) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, PANEL_MAX)}
+      {"\n"}
+      <button type="button" onClick={() => setAll(true)} className="mt-2 text-zinc-500 not-italic hover:text-zinc-300">
+        Show all ({formatTokens(text.length)} chars)
+      </button>
+    </>
   );
 }
 
