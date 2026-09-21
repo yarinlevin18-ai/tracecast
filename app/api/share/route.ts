@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient, SharingNotConfigured } from "@/lib/supabase/admin";
 import { uploadTrace, type StoreClient } from "@/lib/share/store";
+import { checkAndRecordShare, hashIp, type LimitClient } from "@/lib/share/ratelimit";
 import { MAX_TRACE_BYTES, ValidationError, validateTrace } from "@/lib/share/validate";
 
 export const runtime = "nodejs";
@@ -41,6 +42,12 @@ export async function POST(req: Request) {
   } catch (err) {
     if (err instanceof SharingNotConfigured) return NextResponse.json({ error: err.message }, { status: 503 });
     throw err;
+  }
+
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
+  const limit = await checkAndRecordShare(client as unknown as LimitClient, hashIp(ip, process.env.SHARE_IP_SALT ?? "tracecast"));
+  if (!limit.allowed) {
+    return NextResponse.json({ error: "Too many shares from this network. Try again in an hour." }, { status: 429 });
   }
 
   try {

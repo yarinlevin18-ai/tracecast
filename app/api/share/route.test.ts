@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { uploadTrace, getAdminClient } = vi.hoisted(() => ({ uploadTrace: vi.fn(), getAdminClient: vi.fn() }));
+const { uploadTrace, getAdminClient, checkAndRecordShare } = vi.hoisted(() => ({
+  uploadTrace: vi.fn(),
+  getAdminClient: vi.fn(),
+  checkAndRecordShare: vi.fn(),
+}));
 vi.mock("@/lib/share/store", async (orig) => ({ ...(await orig<typeof import("@/lib/share/store")>()), uploadTrace }));
+vi.mock("@/lib/share/ratelimit", async (orig) => ({ ...(await orig<typeof import("@/lib/share/ratelimit")>()), checkAndRecordShare }));
 vi.mock("@/lib/supabase/admin", () => ({
   getAdminClient,
   SharingNotConfigured: class SharingNotConfigured extends Error {},
@@ -9,6 +14,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 
 import { POST } from "./route";
 import { SharingNotConfigured } from "@/lib/supabase/admin";
+import { hashIp } from "@/lib/share/ratelimit";
 
 const trace = {
   id: "s",
@@ -29,6 +35,8 @@ describe("POST /api/share", () => {
     uploadTrace.mockReset();
     getAdminClient.mockReset();
     getAdminClient.mockReturnValue({});
+    checkAndRecordShare.mockReset();
+    checkAndRecordShare.mockResolvedValue({ allowed: true, remaining: 9 });
   });
 
   it("uploads a valid trace and returns the share url", async () => {
@@ -79,5 +87,25 @@ describe("POST /api/share", () => {
     const res = await post({ trace, expiresInDays: null });
     expect(res.status).toBe(502);
     expect((await res.json()).error).toBe("upload failed, try again");
+  });
+
+  it("answers 429 when the rate limit is exceeded", async () => {
+    checkAndRecordShare.mockResolvedValue({ allowed: false, remaining: 0 });
+    const res = await post({ trace, expiresInDays: null });
+    expect(res.status).toBe(429);
+    expect(typeof (await res.json()).error).toBe("string");
+    expect(uploadTrace).not.toHaveBeenCalled();
+  });
+
+  it("hashes the first forwarded ip for the rate limiter", async () => {
+    uploadTrace.mockResolvedValue({ id: "AbCdEfGhIjKl", expiresAt: null });
+    await POST(
+      new Request("http://localhost/api/share", {
+        method: "POST",
+        body: JSON.stringify({ trace, expiresInDays: null }),
+        headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.9, 10.0.0.1" },
+      })
+    );
+    expect(checkAndRecordShare).toHaveBeenCalledWith(expect.anything(), hashIp("203.0.113.9", "tracecast"));
   });
 });
