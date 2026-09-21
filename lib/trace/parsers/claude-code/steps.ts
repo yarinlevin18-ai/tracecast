@@ -27,7 +27,7 @@ export function linesToSteps(lines: RawLine[], agent: string, warnings: string[]
     if (type !== "user" && type !== "assistant" && type !== "system") continue;
     if (!uuid) continue;
     if (!at) {
-      if (type !== "system") warnings.push(`${type} line ${uuid} has no timestamp, skipped`);
+      warnings.push(`${type} line ${uuid} has no timestamp, skipped`);
       continue;
     }
 

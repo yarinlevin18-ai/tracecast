@@ -160,13 +160,17 @@ describe("linesToSteps", () => {
       { type: "attachment", uuid: "x", timestamp: T0 },
       { type: "system", uuid: "s1", timestamp: T0, subtype: "api_error" },
       { type: "system", uuid: "s2", timestamp: T1, subtype: "compact_boundary" },
+      { type: "system", uuid: "s3", subtype: "compact_boundary" },
       { type: "user", uuid: "u9", message: { content: "no timestamp" } },
     ];
     const warnings: string[] = [];
     const steps = linesToSteps(lines, "main", warnings);
 
     expect(steps.map((s) => s.kind)).toEqual(["system"]);
-    expect(warnings).toEqual(["user line u9 has no timestamp, skipped"]);
+    expect(warnings).toEqual([
+      "system line s3 has no timestamp, skipped",
+      "user line u9 has no timestamp, skipped",
+    ]);
   });
 
   it("warns on unknown block types", () => {
