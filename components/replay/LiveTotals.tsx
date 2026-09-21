@@ -36,7 +36,7 @@ export function LiveTotals({
           <TickingNumber value={at(totals.output)} format={formatTokens} /> out
         </Chip>
         <Chip>
-          <TickingNumber value={at(totals.toolCalls)} format={String} /> tool calls
+          <TickingNumber value={at(totals.toolCalls)} format={String} /> {at(totals.toolCalls) === 1 ? "tool call" : "tool calls"}
         </Chip>
       </div>
     </header>

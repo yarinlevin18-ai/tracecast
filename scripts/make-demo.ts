@@ -12,6 +12,8 @@ const files = readdirSync(dir)
   .map((f) => ({ name: f, text: readFileSync(join(dir, f), "utf8") }));
 const { trace, warnings } = parseClaudeCodeSession(files);
 const { trace: clean, hits } = redactTrace(trace);
-const out = { ...clean, id: "demo" };
+// The owner's login shows up as a bare word in ls output; the path patterns miss it.
+const scrubbed = JSON.parse(JSON.stringify(clean).replace(/\byarin\b/gi, "dev"));
+const out = { ...scrubbed, id: "demo" };
 writeFileSync(join("lib", "demo", "trace.json"), JSON.stringify(out));
 console.log(`wrote lib/demo/trace.json: ${out.steps.length} steps, ${hits.length} redaction hits, ${warnings.length} warnings`);

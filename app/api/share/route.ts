@@ -45,7 +45,7 @@ export async function POST(req: Request) {
   }
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
-  const limit = await checkAndRecordShare(client as unknown as LimitClient, hashIp(ip, process.env.SHARE_IP_SALT ?? "tracecast"));
+  const limit = await checkAndRecordShare(client as unknown as LimitClient, hashIp(ip, process.env.SHARE_IP_SALT || "tracecast"));
   if (!limit.allowed) {
     return NextResponse.json({ error: "Too many shares from this network. Try again in an hour." }, { status: 429 });
   }

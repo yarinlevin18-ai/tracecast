@@ -38,7 +38,7 @@ export function Landing({ onFiles, error }: Props) {
           <a href="/demo" className="text-xs text-zinc-500 hover:text-zinc-200">Open full size</a>
         </div>
         <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/40">
-          <iframe src="/demo?autoplay=1" title="Tracecast demo replay" className="h-[560px] w-full" loading="lazy" />
+          <iframe src="/demo?autoplay=1" title="Tracecast demo replay" className="h-[420px] w-full sm:h-[560px]" loading="lazy" />
         </div>
       </section>
 
