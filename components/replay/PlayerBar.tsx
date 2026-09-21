@@ -48,6 +48,12 @@ export function PlayerBar({ player }: { player: Player }) {
             onPointerUp={() => {
               dragging.current = false;
             }}
+            onPointerCancel={() => {
+              dragging.current = false;
+            }}
+            onBlur={() => {
+              dragging.current = false;
+            }}
             onChange={(e) => player.seek(Number(e.target.value))}
             className="absolute inset-0 w-full cursor-pointer opacity-0"
           />

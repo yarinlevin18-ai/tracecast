@@ -55,9 +55,15 @@ export function usePlayer(schedule: Schedule): Player {
   // synchronously in the effect body trips react-hooks/set-state-in-effect,
   // so the reset is queued as a microtask instead.
   useEffect(() => {
+    let cancelled = false;
     stateRef.current = initialPlayer();
     time.set(0);
-    queueMicrotask(() => commit(initialPlayer()));
+    queueMicrotask(() => {
+      if (!cancelled) commit(initialPlayer());
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [schedule, commit, time]);
 
   // Frame loop, active only while playing.
