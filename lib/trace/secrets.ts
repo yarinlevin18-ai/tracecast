@@ -51,8 +51,16 @@ export const SECRET_PATTERNS: SecretPattern[] = [
   { name: "home-dir", pattern: /\/Users\/yarin\b/g, replacement: "/Users/dev" },
   { name: "home-dir-slug", pattern: /-Users-yarin-/g, replacement: "-Users-dev-" },
   { name: "windows-home", pattern: /([A-Za-z]):\\(?:Users\\)?Yarin\b/gi, replacement: "$1:\\Users\\dev" },
+  { name: "home-dir-any", pattern: /\/Users\/(?!dev\b)[^\s/\\"']+/g, replacement: "/Users/dev" },
+  { name: "home-dir-linux", pattern: /\/home\/(?!dev\b)[^\s/\\"']+/g, replacement: "/home/dev" },
+  { name: "windows-home-any", pattern: /([A-Za-z]):\\Users\\(?!dev\b)[^\s\\/"']+/g, replacement: "$1:\\Users\\dev" },
 ];
 
 export function redactText(text: string): string {
   return SECRET_PATTERNS.reduce((acc, p) => acc.replace(p.pattern, p.replacement), text);
+}
+
+/** Names of the patterns that would change this text. */
+export function matchedPatterns(text: string): string[] {
+  return SECRET_PATTERNS.filter((p) => new RegExp(p.pattern.source, p.pattern.flags).test(text)).map((p) => p.name);
 }

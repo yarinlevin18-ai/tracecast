@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { redactText } from "./secrets";
+import { matchedPatterns, redactText } from "./secrets";
 
 describe("redactText", () => {
   it("masks common credential shapes", () => {
@@ -80,5 +80,21 @@ describe("redactText", () => {
     expect(redactText("sk_live_abcdefghijklmnop1234 rk_test_abcdefghijklmnop1234 npm_abcdefghijklmnopqrstuvwxyz")).toBe(
       "STRIPE-REDACTED STRIPE-REDACTED npm_REDACTED",
     );
+  });
+
+  it("rewrites any home directory, not only the fixture owner's", () => {
+    expect(redactText("/Users/alice/Projects/x and /home/bob/y and C:\\Users\\Carol\\z")).toBe(
+      "/Users/dev/Projects/x and /home/dev/y and C:\\Users\\dev\\z"
+    );
+    expect(redactText("/Users/dev/already")).toBe("/Users/dev/already");
+  });
+});
+
+describe("matchedPatterns", () => {
+  it("names the patterns that would change the text", () => {
+    expect(matchedPatterns("sk-abcdefghijklmnopqrstuvwxyz and /Users/x/y")).toEqual(
+      expect.arrayContaining(["anthropic/openai", "home-dir-any"])
+    );
+    expect(matchedPatterns("plain")).toEqual([]);
   });
 });
