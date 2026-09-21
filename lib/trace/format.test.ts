@@ -34,5 +34,6 @@ describe("formatOffset", () => {
     expect(formatOffset(0)).toBe("+0:00");
     expect(formatOffset(65000)).toBe("+1:05");
     expect(formatOffset(3725000)).toBe("+1:02:05");
+    expect(formatOffset(Number.NaN)).toBe("+0:00");
   });
 });

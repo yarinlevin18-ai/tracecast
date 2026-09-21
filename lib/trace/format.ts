@@ -31,6 +31,7 @@ export function formatDuration(ms: number): string {
 
 /** Offset from session start: "+1:05" or "+1:02:05". */
 export function formatOffset(ms: number): string {
+  if (!Number.isFinite(ms)) return "+0:00";
   const total = Math.floor(ms / 1000);
   const s = total % 60;
   const m = Math.floor(total / 60) % 60;

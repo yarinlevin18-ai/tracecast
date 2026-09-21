@@ -19,6 +19,13 @@ describe("StepRow", () => {
     expect(screen.getByText("+1:05")).toBeTruthy();
   });
 
+  it("shows an empty object for a tool call without input", () => {
+    const r = row({ id: "c", kind: "tool_call", tool: { name: "Ping", input: undefined, callId: "x" } });
+    render(<StepRow row={r} startedAt={T0} />);
+    fireEvent.click(screen.getByRole("button", { name: /details/i }));
+    expect(screen.getByText("{}")).toBeTruthy();
+  });
+
   it("renders a tool call with its summary and toggles input and output", () => {
     const r = row(
       { id: "c", kind: "tool_call", tool: { name: "Read", input: { file_path: "a.ts" }, callId: "x" } },

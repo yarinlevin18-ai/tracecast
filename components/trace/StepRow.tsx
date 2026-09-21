@@ -78,7 +78,7 @@ function ToolBody({ row }: { row: TimelineRow }) {
       </button>
       {open && (
         <div className="mt-2 space-y-2">
-          <Panel title="Input">{JSON.stringify(tool.input, null, 2)}</Panel>
+          <Panel title="Input">{JSON.stringify(tool.input, null, 2) ?? "{}"}</Panel>
           {result && (
             <Panel title="Output" isError={result.isError}>
               {result.output}
