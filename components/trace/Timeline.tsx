@@ -19,7 +19,7 @@ function replayProps(row: TimelineRow, current: number | undefined) {
   return { active, enter: active, status };
 }
 
-/** Scroll the current step into view. jsdom has no scrollIntoView. */
+/** Keeps the current step in view while the replay follows it. */
 function useFollow(current: number | undefined, follow: boolean, scrollTo: (index: number) => void) {
   useEffect(() => {
     if (!follow || current === undefined) return;
@@ -37,7 +37,11 @@ export function Timeline({ rows, startedAt, current, follow = false }: Props) {
 function PlainTimeline({ rows, startedAt, current, follow }: Required<Pick<Props, "follow">> & Props) {
   const scrollTo = useCallback((index: number) => {
     const el = document.querySelector(`[data-step-index="${index}"]`);
-    if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ block: "end", behavior: "auto" });
+    if (!el) return;
+    // Scroll only this window. scrollIntoView would also scroll a parent page
+    // that embeds the player in an iframe (the landing page demo).
+    const margin = parseFloat(getComputedStyle(el).scrollMarginBottom) || 0;
+    window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().bottom + margin - window.innerHeight, behavior: "auto" });
   }, []);
   useFollow(current, follow, scrollTo);
 

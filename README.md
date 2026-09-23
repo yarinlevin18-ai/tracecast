@@ -7,7 +7,7 @@ shareable link and an embeddable player. Think Loom for agent runs.
 
 ![Tracecast replaying a Claude Code session](docs/demo.gif)
 
-**Live:** https://tracecast.vercel.app (demo at `/demo`)
+**Live:** https://tracecast.vercel.app (app at `/app`, demo at `/demo`)
 
 ## What it does
 
@@ -31,7 +31,7 @@ Storage behind a service role key that never reaches the browser.
 ## Dev
 
     npm install
-    npm run dev          # http://localhost:3000  (dev: /?fixture=long)
+    npm run dev          # http://localhost:3000  (app at /app, dev: /app?fixture=long)
     npm test
 
 Replay: space plays, arrows step, 1/2/4 set speed.
