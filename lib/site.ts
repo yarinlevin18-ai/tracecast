@@ -3,7 +3,7 @@ export const SITE = {
   tagline: "Replay your agent runs like a screen recording.",
   description: "Turn a Claude Code session into a polished, animated replay with a shareable link and an embeddable player.",
   /** A public share of the demo trace, used in the landing page embed snippet. */
-  demoShareId: "demo00000000",
+  demoShareId: "KeP7sjPiFxIh",
   github: "https://github.com/yarinlevin18-ai/tracecast",
 };
 
